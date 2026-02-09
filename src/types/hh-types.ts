@@ -10,16 +10,6 @@ export interface SearchParams {
   employment?: string[];
 }
 
-export interface Vacancy {
-  id: string;
-  title: string;
-  company: string;
-  salary?: string;
-  url: string;
-  viewed: boolean;
-  datePosted: string;
-}
-
 export interface ActivityStatus {
   percentage: number;
   statusText: string;

@@ -1,11 +1,11 @@
 import { chromium, Browser, Page } from 'playwright';
-import { HHCredentials, SearchParams, Vacancy, ActivityStatus, ScrapingConfig } from '../types/hh-types';
+import { HHCredentials, SearchParams, ActivityStatus, ScrapingConfig } from '../../types/hh-types';
 import { loadVisitedVacancies, saveVisitedVacancies } from './visited';
 import { getIdFromUrl } from '@/utils/getIdFromUrl';
 
 const FULL_PROGRESS = 100;
 
-export class HhScraper {
+export class IncreaseHhActivity {
   private browser: Browser | null = null;
   private page: Page | null = null;
   private config: ScrapingConfig;
@@ -151,7 +151,6 @@ export class HhScraper {
     try {
       // Просто переходим по ссылке (в текущей вкладке)
       await Promise.all([
-        // this.page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }),
         this.page.click(`a[href="${vacancyUrl}"]`)
       ]);
 
@@ -163,27 +162,8 @@ export class HhScraper {
         // Сохраняем обновленный список посещенных вакансий
         await saveVisitedVacancies(this.visitedVacancies);        
       }
-
-      // // Проверяем, что страница вакансии загрузилась
-      // await this.page.waitForSelector('[data-qa="vacancy-title"]', { timeout: 10000 });
-
-      // // Имитация поведения пользователя
-      // await this.page.mouse.wheel(0, 200);
-      // await this.page.waitForTimeout(1000 + Math.random() * 2000);
-
-      // await this.page.mouse.wheel(0, 400);
-      // await this.page.waitForTimeout(1000 + Math.random() * 2000);
-
-      // // Возвращаемся обратно к списку вакансий
-      // await this.page.goBack();
-      // await this.page.waitForSelector('[data-qa="vacancy-serp__results"]', { timeout: 10000 });
     } catch (error) {
       console.error(`Ошибка при открытии вакансии ${vacancyUrl}:`, error);
-      
-      // На всякий случай пытаемся вернуться
-      // try {
-      //   await this.page.goto('https://spb.hh.ru/search/vacancy?text=java&ored_clusters=true');
-      // } catch {}
     }
   }
 
@@ -248,7 +228,7 @@ export class HhScraper {
     // Импортируем broadcastProgress только если он доступен
     let broadcastProgress: ((progress: number, status: string) => void) | undefined;
     try {
-      ({ broadcastProgress } = await import('../app/api/progress/route'));
+      ({ broadcastProgress } = await import('../../app/api/progress/route'));
     } catch (error) {
       console.warn('SSE progress broadcasting is not available:', error);
     }
@@ -312,6 +292,21 @@ export class HhScraper {
 
     const endActivityStatus = await this.getActivityStatus();
     return endActivityStatus.percentage;
+  }
+
+  async raiseCV(): Promise<void> {
+    if (!this.page) throw new Error('Browser not initialized');
+    const cvUrl = `https://spb.hh.ru/applicant/resumes`;
+    
+    // Переход на главную страницу
+    await this.page.goto(cvUrl);
+    await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
+  
+    // Проверка, есть ли еще страницы с результатами
+    const pageCount = await this.getPagesCount();
+    
+    const newVacancies = [];
+    let currentPage = pageCount - 1;
   }
 
   async close(): Promise<void> {

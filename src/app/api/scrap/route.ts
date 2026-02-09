@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HhScraper } from '../../../lib/hh-scraper';
+import { IncreaseHhActivity } from '../../../features/increaseHhActivity';
 import { SearchParams } from '@/types/hh-types';
 
 export async function GET(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const scraper = new HhScraper({ delayBetweenViews: 1000, maxRetries: 3 });
+    const scraper = new IncreaseHhActivity({ delayBetweenViews: 1000, maxRetries: 3 });
     await scraper.init();
     const scrapParams: SearchParams = {
         query,

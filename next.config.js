@@ -17,6 +17,7 @@ const nextConfig = {
     // Исключаем playwright из клиентской сборки
     config.externals = [
       ...(config.externals || []),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ context, request }, callback) => {
         if (/playwright/.test(request)) {
           return callback(null, 'commonjs ' + request);

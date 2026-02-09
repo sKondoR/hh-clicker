@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { IncreaseHhActivity } from '@/features/increaseHhActivity';
 import { SearchParams } from '@/types/hh-types';
 
-export async function GET(_request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(request: NextRequest) {
   try {
     const scraper = new IncreaseHhActivity({ delayBetweenViews: 1000, maxRetries: 3 });
     await scraper.init();

@@ -32,5 +32,6 @@ export function useSSE(isScraping: boolean, setProgress: (progress: number) => v
         eventSource.close();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isScraping]);
 }

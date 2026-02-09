@@ -1,12 +1,15 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useSSE } from '@/hooks/useSSE';
 
 const Home: React.FC = () => {
   const [isScraping, setIsScraping] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('Готов');
   const [query, setQuery] = useState('java');
+
+  useSSE(isScraping, setProgress, setStatus);
 
   const startScraping = async () => {
  

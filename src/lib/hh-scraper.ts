@@ -3,6 +3,8 @@ import { HHCredentials, SearchParams, Vacancy, ActivityStatus, ScrapingConfig } 
 import { loadVisitedVacancies, saveVisitedVacancies } from './visited';
 import { getIdFromUrl } from '@/utils/getIdFromUrl';
 
+const FULL_PROGRESS = 100;
+
 export class HhScraper {
   private browser: Browser | null = null;
   private page: Page | null = null;
@@ -112,12 +114,14 @@ export class HhScraper {
   
     // Проверка, есть ли еще страницы с результатами
     const pageCount = await this.getPagesCount();
-    let currentPage = pageCount-1;
-    await this.page.goto(`${searchUrl}&text=${params.query}&page=${currentPage}`);
-    await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
-
+    
     const newVacancies = [];
-    while (newVacancies.length < neededNewVacancies) {
+    let currentPage = pageCount - 1;
+    
+    while (newVacancies.length < neededNewVacancies && currentPage >= 0) {
+      await this.page.goto(`${searchUrl}&text=${params.query}&page=${currentPage}`);
+      await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
+      
       const vacancyLinks = await this.page.evaluate(() => {
         const links = Array.from(document.querySelectorAll<HTMLLinkElement>('a[data-qa="serp-item__title"]'));
         return links.map(link => link.href);
@@ -133,6 +137,9 @@ export class HhScraper {
           newVacancies.push(link);
         }
       }
+      
+      // Переходим на предыдущую страницу
+      currentPage--;
     }
 
     return newVacancies;
@@ -238,35 +245,42 @@ export class HhScraper {
   }
 
   async startScrapingCycle(searchParams: SearchParams): Promise<number> {
+    // Импортируем broadcastProgress только если он доступен
+    let broadcastProgress: ((progress: number, status: string) => void) | undefined;
+    try {
+      ({ broadcastProgress } = await import('../app/api/progress/route'));
+    } catch (error) {
+      console.warn('SSE progress broadcasting is not available:', error);
+    }
     if (!(await this.login())) {
       throw new Error('Failed to login');
     }
 
     let activityStatus = await this.getActivityStatus();
     console.log(`Начальный уровень активности: ${activityStatus.percentage}%`);
-    const neededNewVacancies = (100 - activityStatus.percentage) / 2;
+    
+    // Отправляем начальный прогресс клиенту через SSE
+    if (broadcastProgress) {
+      broadcastProgress(activityStatus.percentage, `Начальный уровень активности: ${activityStatus.percentage}%`);
+    }
+    const neededNewVacancies = Math.ceil((FULL_PROGRESS - activityStatus.percentage) / 2);
 
      if (neededNewVacancies > 0) {
       console.log(`Нужно открыть ${neededNewVacancies} новых вакансий`);
      } else {
-      // console.log(`Увеличение активности не требуется`);
-      // return activityStatus.percentage;
+      console.log(`Увеличение активности не требуется`);
+      return activityStatus.percentage;
      }
-
-    // toDo: for testing
-    // const vacancyLinks = await this.searchVacancies(searchParams, 5);
-    // console.log(`Найдено ${vacancyLinks.length} вакансий`);
       
-    // while (activityStatus.percentage < 100) {
-    // const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
-      const vacancyLinks = await this.searchVacancies(searchParams, 5);
+    while (activityStatus.percentage < FULL_PROGRESS) {
+      const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
       console.log(`Найдено ${vacancyLinks.length} новых вакансий`);
       
       for (const url of vacancyLinks) {
-        // toDo: for testing
-        // if (activityStatus.percentage >= 100) {
-        //   break;
-        // }
+        // toDo: comment for testing
+        if (activityStatus.percentage >= FULL_PROGRESS) {
+          break;
+        }
         
         console.log(`Открываю вакансию: ${getIdFromUrl(url)}`);
         await this.openVacancy(url);
@@ -278,13 +292,23 @@ export class HhScraper {
         activityStatus = await this.getActivityStatus();
         console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
         
-        // toDo: for testing
-        // if (activityStatus.percentage >= 100) {
-        //   console.log('Достигнут максимальный уровень активности 100%');
-        //   break;
-        // }
+        // Отправляем обновление прогресса клиенту через SSE
+        if (broadcastProgress) {
+          broadcastProgress(activityStatus.percentage, `Текущий уровень активности: ${activityStatus.percentage}%`);
+        }
+        
+        // toDo: comment for testing
+        if (activityStatus.percentage >= FULL_PROGRESS) {
+          console.log('Достигнут максимальный уровень активности 100%');
+        
+        // Отправляем финальное обновление прогресса клиенту через SSE
+        if (broadcastProgress) {
+          broadcastProgress(100, 'Достигнут максимальный уровень активности 100%');
+        }
+          break;
+        }
       }
-    // }
+    }
 
     const endActivityStatus = await this.getActivityStatus();
     return endActivityStatus.percentage;

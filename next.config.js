@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['playwright'],
+    serverExternalPackages: ['playwright'],
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

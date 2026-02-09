@@ -8,7 +8,7 @@ export class SSEConnection {
     this.timer = setInterval(() => this.heartbeat(), 15000); // Отправляем heartbeat каждые 15 секунд
   }
   
-  send(data: any) {
+  send(data: unknown) {
     this.writer.write(`data: ${JSON.stringify(data)}\n\n`);
   }
   

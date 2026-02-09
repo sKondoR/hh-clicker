@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverExternalPackages: ['playwright'],
+    
   },
+  serverExternalPackages: ['playwright'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

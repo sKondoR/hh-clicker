@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { chromium, Browser, Page } from 'playwright';
 import { HHCredentials, SearchParams, ActivityStatus, ScrapingConfig } from '../../types/hh-types';
 import { loadVisitedVacancies, saveVisitedVacancies } from './visited';
@@ -300,13 +301,6 @@ export class IncreaseHhActivity {
     
     // Переход на главную страницу
     await this.page.goto(cvUrl);
-    await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
-  
-    // Проверка, есть ли еще страницы с результатами
-    const pageCount = await this.getPagesCount();
-    
-    const newVacancies = [];
-    let currentPage = pageCount - 1;
   }
 
   async close(): Promise<void> {

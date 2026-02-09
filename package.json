@@ -4,29 +4,34 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --debug-prerender",
+    "build": "next build",
+    "postinstall": "npx playwright install chromium",
     "start": "next start",
-    "lint": "next lint",
-    "test": "playwright test",
-    "test-ui": "playwright test --ui",
-    "postinstall": "playwright install"
+    "lint": "eslint"
   },
   "dependencies": {
-    "crypto-browserify": "^3.12.0",
-    "next": "^14.0.0",
-    "playwright": "^1.40.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@fortawesome/free-solid-svg-icons": "^7.1.0",
+    "@fortawesome/react-fontawesome": "^3.1.1",
+    "@next/bundle-analyzer": "^16.1.2",
+    "@sparticuz/chromium": "^143.0.0",
+    "next": "^15.1.1",
+    "playwright": "^1.57.0",
+    "playwright-core": "^1.57.0",
+    "postcss": "^8.5.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
-    "@types/next": "^8.0.7",
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0",
-    "tailwindcss": "^3.3.0",
-    "typescript": "^5.0.0"
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^20.19.30",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.23",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "16.1.1",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
   }
 }

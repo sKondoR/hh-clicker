@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const scraper = new HhScraper({ delayBetweenViews: 5000, maxRetries: 3 });
+    const scraper = new HhScraper({ delayBetweenViews: 1000, maxRetries: 3 });
     await scraper.init();
     const scrapParams: SearchParams = {
         query,

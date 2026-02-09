@@ -96,9 +96,7 @@ export class HhScraper {
     const lastPageElement = pagerPages[pagerPages.length - 1];
     const lastPageText = await lastPageElement.textContent();
     return parseInt(lastPageText || '1');
-  }
-
-  
+  }  
 
   async searchVacancies(params: SearchParams, neededNewVacancies: number): Promise<string[]> {
     if (!this.page) throw new Error('Browser not initialized');
@@ -114,7 +112,8 @@ export class HhScraper {
   
     // Проверка, есть ли еще страницы с результатами
     const pageCount = await this.getPagesCount();
-    await this.page.goto(`${searchUrl}&text=${params.query}&page=${pageCount-1}`);
+    let currentPage = pageCount-1;
+    await this.page.goto(`${searchUrl}&text=${params.query}&page=${currentPage}`);
     await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
 
     const newVacancies = [];
@@ -126,16 +125,15 @@ export class HhScraper {
       
       // Фильтруем вакансии, которые уже посещали
       for (const link of vacancyLinks) {
+        if (newVacancies.length >= neededNewVacancies) {
+          break;
+        }
         const vacancyId = getIdFromUrl(link);
         if (vacancyId && !this.visitedVacancies.has(vacancyId)) {
           newVacancies.push(link);
-          this.visitedVacancies.add(vacancyId);
         }
       }
     }
-
-    // Сохраняем обновленный список посещенных вакансий
-    await saveVisitedVacancies(this.visitedVacancies);
 
     return newVacancies;
   }
@@ -150,7 +148,14 @@ export class HhScraper {
         this.page.click(`a[href="${vacancyUrl}"]`)
       ]);
 
-      console.log(`Открыта вакансия: ${vacancyUrl}`);
+      console.log(`Открыта вакансия: ${getIdFromUrl(vacancyUrl)}`);
+      
+      const vacancyId = getIdFromUrl(vacancyUrl);
+      if (vacancyId) {
+        this.visitedVacancies.add(vacancyId);
+        // Сохраняем обновленный список посещенных вакансий
+        await saveVisitedVacancies(this.visitedVacancies);        
+      }
 
       // // Проверяем, что страница вакансии загрузилась
       // await this.page.waitForSelector('[data-qa="vacancy-title"]', { timeout: 10000 });
@@ -247,20 +252,23 @@ export class HhScraper {
       // console.log(`Увеличение активности не требуется`);
       // return activityStatus.percentage;
      }
-      
 
-    while (activityStatus.percentage < 100) {
-      // Получаем новые вакансии для просмотра
-      // const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
+    // toDo: for testing
+    // const vacancyLinks = await this.searchVacancies(searchParams, 5);
+    // console.log(`Найдено ${vacancyLinks.length} вакансий`);
+      
+    // while (activityStatus.percentage < 100) {
+    // const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
       const vacancyLinks = await this.searchVacancies(searchParams, 5);
-      console.log(`Найдено ${vacancyLinks.length} вакансий`);
+      console.log(`Найдено ${vacancyLinks.length} новых вакансий`);
       
       for (const url of vacancyLinks) {
-        if (activityStatus.percentage >= 100) {
-          break;
-        }
+        // toDo: for testing
+        // if (activityStatus.percentage >= 100) {
+        //   break;
+        // }
         
-        console.log(`Открываю вакансию: ${url}`);
+        console.log(`Открываю вакансию: ${getIdFromUrl(url)}`);
         await this.openVacancy(url);
         
         // Задержка между открытиями вакансий
@@ -270,12 +278,13 @@ export class HhScraper {
         activityStatus = await this.getActivityStatus();
         console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
         
-        if (activityStatus.percentage >= 100) {
-          console.log('Достигнут максимальный уровень активности 100%');
-          break;
-        }
+        // toDo: for testing
+        // if (activityStatus.percentage >= 100) {
+        //   console.log('Достигнут максимальный уровень активности 100%');
+        //   break;
+        // }
       }
-    }
+    // }
 
     const endActivityStatus = await this.getActivityStatus();
     return endActivityStatus.percentage;

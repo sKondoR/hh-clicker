@@ -228,7 +228,7 @@ export class IncreaseHhActivity {
     // Импортируем broadcastProgress только если он доступен
     let broadcastProgress: ((progress: number, status: string) => void) | undefined;
     try {
-      ({ broadcastProgress } = await import('../../app/api/progress/route'));
+      ({ broadcastProgress } = await import('../../lib/sse'));
     } catch (error) {
       console.warn('SSE progress broadcasting is not available:', error);
     }

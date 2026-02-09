@@ -60,6 +60,3 @@ export async function GET(request: NextRequest) {
   
   return new NextResponse(readable, { headers });
 }
-
-// Экспортируем типы для предотвращения ошибок типизации
-export const config = { runtime: 'edge' };

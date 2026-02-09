@@ -1,10 +1,13 @@
 import { chromium, Browser, Page } from 'playwright';
 import { HHCredentials, SearchParams, Vacancy, ActivityStatus, ScrapingConfig } from '../types/hh-types';
+import { loadVisitedVacancies, saveVisitedVacancies } from './visited';
+import { getIdFromUrl } from '@/utils/getIdFromUrl';
 
 export class HhScraper {
   private browser: Browser | null = null;
   private page: Page | null = null;
   private config: ScrapingConfig;
+  private visitedVacancies: Set<string> = new Set();
 
   constructor(config: ScrapingConfig = { delayBetweenViews: 3000, maxRetries: 3 }) {
     this.config = config;
@@ -95,8 +98,13 @@ export class HhScraper {
     return parseInt(lastPageText || '1');
   }
 
+  
+
   async searchVacancies(params: SearchParams, neededNewVacancies: number): Promise<string[]> {
     if (!this.page) throw new Error('Browser not initialized');
+
+    // Загружаем список уже посещенных вакансий
+    this.visitedVacancies = await loadVisitedVacancies();
 
     const searchUrl = `https://spb.hh.ru/search/vacancy?salary=&ored_clusters=true&hhtmFrom=vacancy_search_list&hhtmFromLabel=vacancy_search_line`;
     
@@ -106,9 +114,7 @@ export class HhScraper {
   
     // Проверка, есть ли еще страницы с результатами
     const pageCount = await this.getPagesCount();
-    await this.page.goto(`${searchUrl}&text=${params.query}&page=${pageCount}`);
-
-    // Ожидание результатов поиска
+    await this.page.goto(`${searchUrl}&text=${params.query}&page=${pageCount-1}`);
     await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
 
     const newVacancies = [];
@@ -117,8 +123,19 @@ export class HhScraper {
         const links = Array.from(document.querySelectorAll<HTMLLinkElement>('a[data-qa="serp-item__title"]'));
         return links.map(link => link.href);
       });
-      newVacancies.push(...vacancyLinks);
+      
+      // Фильтруем вакансии, которые уже посещали
+      for (const link of vacancyLinks) {
+        const vacancyId = getIdFromUrl(link);
+        if (vacancyId && !this.visitedVacancies.has(vacancyId)) {
+          newVacancies.push(link);
+          this.visitedVacancies.add(vacancyId);
+        }
+      }
     }
+
+    // Сохраняем обновленный список посещенных вакансий
+    await saveVisitedVacancies(this.visitedVacancies);
 
     return newVacancies;
   }
@@ -227,14 +244,15 @@ export class HhScraper {
      if (neededNewVacancies > 0) {
       console.log(`Нужно открыть ${neededNewVacancies} новых вакансий`);
      } else {
-      console.log(`Увеличение активности не требуется`);
-      return activityStatus.percentage;
+      // console.log(`Увеличение активности не требуется`);
+      // return activityStatus.percentage;
      }
       
 
-    while (activityStatus.percentage < 100 && neededNewVacancies > 0) {
+    while (activityStatus.percentage < 100) {
       // Получаем новые вакансии для просмотра
-      const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
+      // const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
+      const vacancyLinks = await this.searchVacancies(searchParams, 5);
       console.log(`Найдено ${vacancyLinks.length} вакансий`);
       
       for (const url of vacancyLinks) {

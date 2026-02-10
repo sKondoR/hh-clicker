@@ -300,7 +300,10 @@ export class IncreaseHhActivity {
     const cvUrl = `https://spb.hh.ru/applicant/resumes`;
     
     // Переход на главную страницу
-    await this.page.goto(cvUrl);
+    await this.page.goto(cvUrl, { waitUntil: 'load' });
+
+    await this.page.click('button:has-text("Поднять в поиске")');
+    console.log('Кликнул на Поднять в поиске');
   }
 
   async close(): Promise<void> {

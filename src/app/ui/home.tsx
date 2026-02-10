@@ -17,7 +17,7 @@ const Home: React.FC = () => {
     setStatus('Запуск процесса...');
     
     try {
-       const response = await fetch(`/api/scrap?query=${query}`);
+       const response = await fetch(`/api/activity?query=${query}`);
        if (response.ok) {
         setIsScraping(false);
         setStatus('Готов');

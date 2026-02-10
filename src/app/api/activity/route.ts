@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
         query,
     };
     const activityPercentage = await scraper.startScrapingCycle(scrapParams);
+    await scraper.raiseCV();
     await scraper.close();
     await logApiExecution(pathname, `success - ${activityPercentage}%`);
     // Для демонстрации, используем фиктивные данные, так как у нас нет реальных учетных данных

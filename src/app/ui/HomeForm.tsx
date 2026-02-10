@@ -17,15 +17,17 @@ const HomeForm: React.FC = () => {
     setStatus('Запуск процесса...');
     
     try {
-       const response = await fetch(`/api/activity?query=${query}`);
-       if (response.ok) {
-        setIsScraping(false);
-        setStatus('Готов');
+       const response = await fetch(`/api/activity?query=${encodeURIComponent(query)}`);
+       if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Error for request /api/activity: ${err}`);
        }
        const { activityPercentage } = await response.json();
        setProgress(activityPercentage);
+       setStatus('Готов');
     } catch (error) {
       setStatus('Ошибка: ' + (error as Error).message);
+    } finally {
       setIsScraping(false);
     }
   };
@@ -52,6 +54,7 @@ const HomeForm: React.FC = () => {
             className="w-full px-3 py-2 text-gray-700 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
             onChange={(e) => setQuery(e.target.value)}
             value={query}
+            disabled={isScraping}
           />
         </div>
 

@@ -302,8 +302,13 @@ export class IncreaseHhActivity {
     // Переход на главную страницу
     await this.page.goto(cvUrl, { waitUntil: 'load' });
 
-    await this.page.click('button:has-text("Поднять в поиске")');
-    console.log('Кликнул на Поднять в поиске');
+    const button = await this.page.$('button:has-text("Поднять в поиске")');
+    if (button) {
+      await this.page.click('button:has-text("Поднять в поиске")');
+      console.log('Кликнул на Поднять в поиске');
+    } else {
+      console.log('Кнопка "Поднять в поиске" не найдена');
+    }
   }
 
   async close(): Promise<void> {

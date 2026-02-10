@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useSSE } from '@/hooks/useSSE';
 
-const Home: React.FC = () => {
+const HomeForm: React.FC = () => {
   const [isScraping, setIsScraping] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('Готов');
@@ -98,4 +98,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default HomeForm;

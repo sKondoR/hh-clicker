@@ -28,9 +28,7 @@ export async function GET(request: NextRequest) {
     await scraper.raiseCV();
     await scraper.close();
     await logApiExecution(pathname, `success - ${activityPercentage}%`);
-    // Для демонстрации, используем фиктивные данные, так как у нас нет реальных учетных данных
     const data = { success: true, activityPercentage: activityPercentage };
-    
     return NextResponse.json(data);
   } catch (error) {
     await logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');

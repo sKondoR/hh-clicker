@@ -17,7 +17,7 @@ const Home: React.FC = () => {
     setStatus('Запуск процесса...');
     
     try {
-       const response = await fetch(`/api/activity?query=${query}`);
+       const response = await fetch(`/api/scrap?query=${query}`);
        if (response.ok) {
         setIsScraping(false);
         setStatus('Готов');
@@ -91,7 +91,7 @@ const Home: React.FC = () => {
         </div>
         
         <div className="mt-6 text-sm text-gray-500">
-          <p>Приложение будет автоматически открывать вакансии по запросу &quot;{query}&quot; до достижения 100% активности.</p>
+          <p>Приложение будет автоматически открывать вакансии по запросу (например &quot;java&quot;) до достижения 100% активности.</p>
         </div>
       </div>
     </div>

@@ -11,8 +11,8 @@ if (!connectionString) {
 const pool = createPool({
   connectionString,
   max: 30,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 30000,
+  idleTimeoutMillis: 5000,
+  connectionTimeoutMillis: 5000,
 });
 
 async function testConnection() {

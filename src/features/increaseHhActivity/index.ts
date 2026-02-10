@@ -1,8 +1,8 @@
 // eslint-disable-next-line no-restricted-imports
 import { chromium, Browser, Page } from 'playwright';
 import { HHCredentials, SearchParams, ActivityStatus, ScrapingConfig } from '../../types/hh-types';
-import { loadVisitedVacancies, saveVisitedVacancies } from './visited';
 import { getIdFromUrl } from '@/utils/getIdFromUrl';
+import { loadVisitedVacancies, saveVisitedVacancy } from '@/lib/api-visited';
 
 const FULL_PROGRESS = 100;
 
@@ -161,7 +161,7 @@ export class IncreaseHhActivity {
       if (vacancyId) {
         this.visitedVacancies.add(vacancyId);
         // Сохраняем обновленный список посещенных вакансий
-        await saveVisitedVacancies(this.visitedVacancies);        
+        await saveVisitedVacancy(vacancyId);        
       }
     } catch (error) {
       console.error(`Ошибка при открытии вакансии ${vacancyUrl}:`, error);

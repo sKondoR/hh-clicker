@@ -12,7 +12,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">{children}</div>
+      </body>
     </html>
   )
 }

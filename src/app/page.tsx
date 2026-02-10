@@ -1,5 +1,10 @@
-import Home from "./ui/home";
+import Home from "./ui/Home";
+import Logs from "./ui/Logs";
+
 
 export default function Page() {
-  return <div><Home /></div>;
+  return <div>
+    <Home />
+    <Logs />
+  </div>;
 }

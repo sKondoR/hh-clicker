@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { IncreaseHhActivity } from '@/features/increaseHhActivity';
 import { SearchParams } from '@/types/hh-types';
+import { logApiExecution } from '@/lib/api-execution';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {
@@ -13,8 +14,10 @@ export async function GET(request: NextRequest) {
     await scraper.startScrapingCycle(scrapParams);
     await scraper.raiseCV();
     await scraper.close();
+    await logApiExecution('/api/cron', 'success');
     return NextResponse.json({ success: true, message: 'Cron job executed' });
   } catch (error) {
+    await logApiExecution('/api/cron', 'error', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
       { error: 'Cron job failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

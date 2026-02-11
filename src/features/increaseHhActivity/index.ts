@@ -48,8 +48,8 @@ export class IncreaseHhActivity {
 
   async login(): Promise<boolean> {
     const credentials: HHCredentials = {
-      username: process.env.HH_USERNAME || '',
-      password: process.env.HH_PASSWORD || ''
+      username: process.env.NEXT_PUBLIC_HH_USERNAME || '',
+      password: process.env.NEXT_PUBLIC_HH_PASSWORD || ''
     };
     if (!credentials.username || !credentials.password) {
       throw new Error('Credentials not found in environment variables');

@@ -14,7 +14,8 @@ body {
 
 /* Make scrollbar pretty */
 ::-webkit-scrollbar {
-  width: 0.25rem;
+  width: 0.4rem;
+  height: 0.4rem;
 }
 
 ::-webkit-scrollbar-track {

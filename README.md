@@ -1,4 +1,4 @@
-# HH Clicker - Автоматическое повышение активности на HeadHunter
+# HeadHunter Activity Clicker
 
 🌐 [https://hh-clicker.vercel.app/](https://hh-clicker.vercel.app/)
 

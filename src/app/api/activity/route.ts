@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
         await scraper.close();
         await logApiExecution(pathname, `success - ${activityPercentage}%`);
       }
-      await scraper.close();
       const data = { success: true, activityPercentage: activityPercentage };
+      await scraper.close();
       return NextResponse.json(data);
     } else {
       await scraper.close();

@@ -26,7 +26,8 @@ export class IncreaseHhActivity {
 
     this.browser = await plChromium.launch({ 
       executablePath,
-      headless: process.env.NODE_ENV === 'production',
+      headless: false,
+      // headless: process.env.NODE_ENV === 'production',
       args: [
         '--no-sandbox',                    // Отключает sandbox-защиту Chromium. Полезно в изолированных средах (например, Docker), где sandbox может вызывать проблемы. ⚠️ Опасно в ненадёжных окружениях.
         '--disable-setuid-sandbox',        // Отключает setuid sandbox, который иногда несовместим с контейнерами.

@@ -40,6 +40,17 @@ export class IncreaseHhActivity {
     });
     
     this.page = await this.browser.newPage();
+
+    // Блокировка ресурсов для ускорения
+    await this.page.route('**/*', (route) => {
+      const resourceType = route.request().resourceType();
+      const blockedResources = ['image', 'stylesheet', 'font', 'media'];
+      if (blockedResources.includes(resourceType)) {
+        route.abort();
+      } else {
+        route.continue();
+      }
+    });
     
     // Установка дополнительных заголовков для имитации реального пользователя
     await this.page.setExtraHTTPHeaders({
@@ -232,7 +243,8 @@ export class IncreaseHhActivity {
         }
       }
       if (broadcastProgress) {
-        broadcastProgress(percentage, `Начальный уровень активности: ${percentage}%`);
+        console.log('SSE sends percentage: ', percentage);
+        broadcastProgress(percentage, `уровень активности: ${percentage}%`);
       }
       return {
         percentage,
@@ -259,7 +271,7 @@ export class IncreaseHhActivity {
     }
 
     let activityStatus = await this.getActivityStatus();
-    console.log(`Начальный уровень активности: ${activityStatus.percentage}%`);
+    console.log(`уровень активности: ${activityStatus.percentage}%`);
 
     const neededNewVacancies = Math.ceil((FULL_PROGRESS - activityStatus.percentage) / 2);
 

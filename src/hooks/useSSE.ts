@@ -6,10 +6,10 @@ export function useSSE(setProgress: (progress: number) => void, setStatus: (stat
     let eventSource: EventSource | null = null;
     
       eventSource = new EventSource('/api/progress');
-      
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('SSE receive percentage: ', data);
           if (data.progress !== undefined) {
             setProgress(data.progress);
           }

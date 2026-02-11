@@ -18,7 +18,7 @@ export class IncreaseHhActivity {
 
   async init(): Promise<void> {
     this.browser = await chromium.launch({ 
-      headless: false,
+      headless: process.env.NODE_ENV === 'production',
       args: ['--disable-blink-features=AutomationControlled']
     });
     

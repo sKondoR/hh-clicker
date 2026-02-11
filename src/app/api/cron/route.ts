@@ -7,7 +7,6 @@ import { logApiExecution } from '@/lib/api-execution';
 export async function GET(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   try {
-    await logApiExecution(pathname, 'start');
     const scraper = new IncreaseHhActivity({ delayBetweenViews: 1000, maxRetries: 3 });
     await scraper.init();
     const scrapParams: SearchParams = {

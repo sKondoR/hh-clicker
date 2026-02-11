@@ -58,7 +58,7 @@ const HomeForm: React.FC = () => {
   };
 
   // Button disabled logic
-  const isStartButtonDisabled = progress === null || progress === MAX_PROGRESS || isScraping;
+  const isStartButtonDisabled = progress === null || progress === undefined || progress === MAX_PROGRESS || isScraping;
   const isStopButtonDisabled = !isScraping;
 
   return (

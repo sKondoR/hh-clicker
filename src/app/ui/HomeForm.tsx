@@ -39,11 +39,11 @@ const HomeForm: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-pink-700">
+      <h1 className="text-3xl font-bold text-teal-700">
         HH Clicker
       </h1>
-      <h2 className="text-xl font-bold text-gray-700 mb-8">
-        Автоматическое повышение активности на HeadHunter
+      <h2 className="text-xl text-gray-500 mb-8 leading-none">
+        Автоматическое повышение активности на <span className="font-bold text-red-500">HeadHunter</span>
       </h2>
     
       <div> 
@@ -81,7 +81,7 @@ const HomeForm: React.FC = () => {
             disabled={isScraping}
             className="cursor-pointer flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
           >
-            {isScraping ? 'Выполняется...' : 'Начать просмотр'}
+            {isScraping ? 'Выполняется...' : 'Повысить активность'}
           </button>
           
           <button

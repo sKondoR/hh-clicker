@@ -80,7 +80,7 @@ export class IncreaseHhActivity {
     
     // Нажатие кнопки входа
     await this.page.click('button:has-text("Войти")');
-    await this.page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+    await this.page.waitForNavigation({ waitUntil: 'load' });
 
     // Проверка успешной авторизации
     const isLoggedIn = await this.checkLoginStatus();
@@ -124,7 +124,7 @@ export class IncreaseHhActivity {
     const searchUrl = `https://spb.hh.ru/search/vacancy?salary=&ored_clusters=true&hhtmFrom=vacancy_search_list&hhtmFromLabel=vacancy_search_line`;
     
     // Переход на главную страницу
-    await this.page.goto(`${searchUrl}&text=${params.query}`);
+    await this.page.goto(`${searchUrl}&text=${params.query}`, { waitUntil: 'domcontentloaded' });
     await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
   
     // Проверка, есть ли еще страницы с результатами

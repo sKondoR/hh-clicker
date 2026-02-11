@@ -20,9 +20,17 @@ const HomeForm: React.FC = () => {
   useEffect(() => {
     const fetchInitialActivity = async () => {
       try {
-        await fetch('/api/activity');
+        const response = await fetch('/api/activity');
+        if (!response.ok) {
+          const err = await response.text();
+          throw new Error(`Error for request /api/activity: ${err}`);
+        }
+        const { activityPercentage } = await response.json();
+        setProgress(activityPercentage);
+        setStatus('Готов');
       } catch (error) {
         setStatus(`Ошибка загрузки активности: ${(error as Error).message}`);
+        setProgress(null);
       }
     };
 

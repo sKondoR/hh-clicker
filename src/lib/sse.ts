@@ -25,6 +25,7 @@ export class SSEConnection {
 export const connections = new Set<SSEConnection>();
 // Функция для отправки обновлений всем подключенным клиентам
 export function broadcastProgress(progress: number, status: string) {
+  console.log('inside broadcastProgress', connections);
   connections.forEach(connection => {
     connection.send({ progress, status, timestamp: new Date().toISOString() });
   });

@@ -3,7 +3,6 @@ import { IncreaseHhActivity } from '@/features/increaseHhActivity';
 import { SearchParams } from '@/types/hh-types';
 import { logApiExecution } from '@/lib/api-execution';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   try {

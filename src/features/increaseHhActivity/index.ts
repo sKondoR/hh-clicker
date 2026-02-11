@@ -258,9 +258,6 @@ export class IncreaseHhActivity {
     } catch (error) {
       console.warn('SSE progress broadcasting is not available:', error);
     }
-    if (!(await this.login())) {
-      throw new Error('Failed to login');
-    }
 
     let activityStatus = await this.getActivityStatus();
     console.log(`Начальный уровень активности: ${activityStatus.percentage}%`);

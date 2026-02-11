@@ -50,6 +50,7 @@ const HomeForm: React.FC = () => {
     setStatus('Остановлено пользователем');
   };
 
+  const isButtonDisabled = progress === 100 || isScraping;
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
       <h1 className="text-3xl font-bold text-teal-700">
@@ -92,8 +93,10 @@ const HomeForm: React.FC = () => {
         <div className="flex space-x-4">
           <button
             onClick={startScraping}
-            disabled={isScraping}
-            className="cursor-pointer flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+            disabled={isButtonDisabled}
+            className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50
+              ${isButtonDisabled ? '' : ' cursor-pointer hover:bg-green-700'}
+            `}
           >
             {isScraping ? 'Выполняется...' : 'Повысить активность'}
           </button>
@@ -101,7 +104,9 @@ const HomeForm: React.FC = () => {
           <button
             onClick={stopScraping}
             disabled={!isScraping}
-            className="cursor-pointer flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+            className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50
+              ${isScraping ? ' cursor-pointer hover:bg-red-700' : ''}
+            `}
           >
             Остановить
           </button>

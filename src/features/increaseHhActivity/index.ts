@@ -242,6 +242,7 @@ export class IncreaseHhActivity {
           percentage = textBasedSearch;
         }
       }
+       console.log('getActivityStatus: ', percentage, broadcastProgress);
       if (broadcastProgress) {
         console.log('SSE sends percentage: ', percentage);
         broadcastProgress(percentage, `уровень активности: ${percentage}%`);

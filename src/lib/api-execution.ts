@@ -4,11 +4,13 @@ import { eq, gte } from 'drizzle-orm';
 
 export async function getApiExecutionsLog(from?: Date) {
   try {
+    let result = [];
     if (from) {
-      return await db.select().from(apiExecutions).where(gte(apiExecutions.executedAt, from));
-    }
-    
-    return await db.select().from(apiExecutions);
+      result = await db.select().from(apiExecutions).where(gte(apiExecutions.executedAt, from));
+    } else {
+      result = await db.select().from(apiExecutions);
+    }    
+    return result.sort((a, b) => new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime());
   } catch (error) {
     console.error('Ошибка при получении логов выполнения API:', error);
     throw error;

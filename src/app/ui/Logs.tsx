@@ -44,26 +44,28 @@ export default function Logs() {
       {logs.length === 0 ? (
         <p className="text-sm">Нет доступных логов за последние 7 дней.</p>
       ) : (
-        <table className="logs-table text-sm text-left">
-          <thead>
-            <tr className="text-pink-700 text-bold">
-              <th className="pr-6">Endpoint</th>
-              <th className="pr-6">Status</th>
-              <th className="pr-6">Time</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
-              <tr key={log.id} className="log-entry">
-                <td className="pr-6">{log.endpoint}</td>
-                <td className="pr-6">{log.status}</td>
-                <td className="pr-6">{new Date(log.executedAt).toLocaleString()}</td>
-                <td>{log.details && <span><strong>Details:</strong> {log.details}</span>}</td>
+        <div className="text-xs h-50 overflow-y-auto text">
+          <table className="text-left">
+            <thead>
+              <tr className="text-pink-700 text-bold">
+                <th className="pr-6 whitespace-nowrap">Endpoint</th>
+                <th className="pr-6 whitespace-nowrap">Status</th>
+                <th className="pr-6 whitespace-nowrap">Time</th>
+                <th>Details</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr key={log.id} className="log-entry">
+                  <td className="pr-6 whitespace-nowrap align-top">{log.endpoint}</td>
+                  <td className="pr-6 whitespace-nowrap align-top">{log.status}</td>
+                  <td className="pr-6 whitespace-nowrap align-top">{new Date(log.executedAt).toLocaleString()}</td>
+                  <td className="align-top">{log.details}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

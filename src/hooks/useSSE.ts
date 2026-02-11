@@ -1,18 +1,21 @@
 import { useEffect } from "react";
 
 // Хук для подключения к SSE для получения реального времени прогресса
-export function useSSE(isScraping: boolean, setProgress: (progress: number) => void, setStatus: (status: string) => void) {
+export function useSSE(setProgress: (progress: number) => void, setStatus: (status: string) => void) {
   useEffect(() => {
     let eventSource: EventSource | null = null;
     
-    if (isScraping) {
       eventSource = new EventSource('/api/progress');
       
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          setProgress(data.progress);
-          setStatus(data.status);
+          if (data.progress !== undefined) {
+            setProgress(data.progress);
+          }
+          if (data.status !== undefined) {
+            setStatus(data.status);
+          }
         } catch (err) {
           console.error('Error parsing SSE data:', err);
         }
@@ -24,7 +27,6 @@ export function useSSE(isScraping: boolean, setProgress: (progress: number) => v
           setStatus('Подключение закрыто');
         }
       };
-    }
     
     // Очистка при остановке скрапинга или размонтировании компонента
     return () => {
@@ -33,5 +35,5 @@ export function useSSE(isScraping: boolean, setProgress: (progress: number) => v
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isScraping]);
+  }, []);
 }

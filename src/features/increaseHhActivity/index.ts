@@ -189,6 +189,13 @@ export class IncreaseHhActivity {
 
     // Поиск элемента, содержащего информацию об активности
     try {
+          // Импортируем broadcastProgress только если он доступен
+      let broadcastProgress: ((progress: number, status: string) => void) | undefined;
+      try {
+        ({ broadcastProgress } = await import('../../lib/sse'));
+      } catch (error) {
+        console.warn('SSE progress broadcasting is not available:', error);
+      }
       // Попробуем найти элемент, связанный с активностью соискателя
       const activityElements = await this.page.$$('.bloko-progress-bar, [data-qa*="activity"], .applicant-proficiency-rate');
       
@@ -225,7 +232,9 @@ export class IncreaseHhActivity {
           percentage = textBasedSearch;
         }
       }
-      
+      if (broadcastProgress) {
+        broadcastProgress(percentage, `Начальный уровень активности: ${percentage}%`);
+      }
       return {
         percentage,
         statusText: `${percentage}%`,
@@ -255,11 +264,7 @@ export class IncreaseHhActivity {
 
     let activityStatus = await this.getActivityStatus();
     console.log(`Начальный уровень активности: ${activityStatus.percentage}%`);
-    
-    // Отправляем начальный прогресс клиенту через SSE
-    if (broadcastProgress) {
-      broadcastProgress(activityStatus.percentage, `Начальный уровень активности: ${activityStatus.percentage}%`);
-    }
+
     const neededNewVacancies = Math.ceil((FULL_PROGRESS - activityStatus.percentage) / 2);
 
      if (neededNewVacancies > 0) {

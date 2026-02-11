@@ -10,31 +10,39 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('query');
-    
-    if (!query) {
-      await logApiExecution(pathname, 'error', 'search query parameter is required');
-      return NextResponse.json(
-        { error: 'search query parameter is required' },
-        { status: 400 }
-      );
-    }
 
     const scraper = new IncreaseHhActivity({ delayBetweenViews: 1000, maxRetries: 3 });
     await scraper.init();
-    const scrapParams: SearchParams = {
-        query,
-    };
-    const activityPercentage = await scraper.startScrapingCycle(scrapParams);
-    await scraper.raiseCV();
-    await scraper.close();
-    await logApiExecution(pathname, `success - ${activityPercentage}%`);
-    const data = { success: true, activityPercentage: activityPercentage };
-    return NextResponse.json(data);
+    
+    if (await scraper.login()) {
+      let activityPercentage;
+      if (!query) {
+        const activityStatus = await scraper.getActivityStatus();
+        activityPercentage = activityStatus.percentage;
+      } else {
+        const scrapParams: SearchParams = {
+            query,
+        };
+        activityPercentage = await scraper.startScrapingCycle(scrapParams);
+        await scraper.raiseCV();
+        await scraper.close();
+        await logApiExecution(pathname, `success - ${activityPercentage}%`);
+      }
+      await scraper.close();
+      const data = { success: true, activityPercentage: activityPercentage };
+      return NextResponse.json(data);
+    } else {
+      await scraper.close();
+      return NextResponse.json(
+        { error: 'Failed to login for status check' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     await logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');
     console.error('API Error:', error);
     return NextResponse.json(
-      { error: 'Failed to scrape data' },
+      { error: 'Failed to get current activity status' },
       { status: 500 }
     );
   }

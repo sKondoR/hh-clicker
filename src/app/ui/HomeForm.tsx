@@ -1,15 +1,28 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSSE } from '@/hooks/useSSE';
 
 const HomeForm: React.FC = () => {
   const [isScraping, setIsScraping] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number | null>(null);
   const [status, setStatus] = useState('Готов');
   const [query, setQuery] = useState('java');
 
-  useSSE(isScraping, setProgress, setStatus);
+  // Запрос начального статуса активности при монтировании компонента
+  useEffect(() => {
+    const fetchInitialActivity = async () => {
+      try {
+        await fetch('/api/activity');
+      } catch (error) {
+        setStatus(`Ошибка загрузки активности: ${(error as Error).message}`);
+      }
+    };
+
+    fetchInitialActivity();
+  }, []);
+
+  useSSE(setProgress, setStatus);
 
   const startScraping = async () => {
  
@@ -61,12 +74,13 @@ const HomeForm: React.FC = () => {
         <div className="mb-6">
           <div className="flex justify-between mb-1">
             <span className="text-sm font-medium text-gray-700">Статус активности</span>
-            <span className="text-sm font-medium text-gray-700">{progress}%</span>
+            <span className="text-sm font-medium text-gray-700">{progress !== null ? `${progress}%` : 'Загрузка...'}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div 
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
-              style={{ width: `${progress}%` }}
+              className={`${progress !== null && progress > 80 ? 'bg-green-600 ' : 'bg-red-600'}
+                h-2.5 rounded-full transition-all duration-300`}
+              style={{ width: `${progress !== null ? progress : 0}%` }}
             ></div>
           </div>
         </div>

@@ -1,6 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+
 import { useSSE } from '@/hooks/useSSE';
 
 const DEFAULT_QUERY = 'java';
@@ -82,7 +85,7 @@ const HomeForm: React.FC = () => {
         <div className="mb-6">
           <div className="flex justify-between mb-1">
             <span className="text-sm font-medium text-gray-700">Статус активности</span>
-            <span className="text-sm font-medium text-gray-700">{progress !== null ? `${progress}%` : 'Загрузка...'}</span>
+            <span className="text-sm font-medium text-gray-700">{progress !== null ? `${progress}%` : <FontAwesomeIcon icon={faSpinner} spin />}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div 
@@ -105,7 +108,7 @@ const HomeForm: React.FC = () => {
               ${isStartButtonDisabled ? '' : ' cursor-pointer hover:bg-green-700'}
             `}
           >
-            {isScraping ? 'Выполняется...' : 'Повысить активность'}
+            {isScraping ? <><FontAwesomeIcon icon={faSpinner} spin /> Выполняется...</> : 'Повысить активность'}
           </button>
           
           <button

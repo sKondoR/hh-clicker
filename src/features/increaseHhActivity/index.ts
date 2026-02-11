@@ -80,7 +80,7 @@ export class IncreaseHhActivity {
     
     // Нажатие кнопки входа
     await this.page.click('button:has-text("Войти")');
-    await this.page.waitForNavigation({ waitUntil: 'load' });
+    await this.page.waitForURL('https://spb.hh.ru/', { waitUntil: 'load' });
 
     // Проверка успешной авторизации
     const isLoggedIn = await this.checkLoginStatus();

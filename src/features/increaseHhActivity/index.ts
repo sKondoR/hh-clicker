@@ -80,7 +80,7 @@ export class IncreaseHhActivity {
     
     // Нажатие кнопки входа
     await this.page.click('button:has-text("Войти")');
-    await this.page.waitForNavigation({ waitUntil: 'networkidle' });
+    await this.page.waitForNavigation({ waitUntil: 'domcontentloaded' });
 
     // Проверка успешной авторизации
     const isLoggedIn = await this.checkLoginStatus();
@@ -316,7 +316,7 @@ export class IncreaseHhActivity {
     const cvUrl = `https://spb.hh.ru/applicant/resumes`;
     
     // Переход на главную страницу
-    await this.page.goto(cvUrl, { waitUntil: 'load' });
+    await this.page.goto(cvUrl, { waitUntil: 'domcontentloaded' });
 
     const button = await this.page.$('button:has-text("Поднять в поиске")');
     if (button) {

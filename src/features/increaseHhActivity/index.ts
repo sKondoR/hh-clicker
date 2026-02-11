@@ -79,10 +79,8 @@ export class IncreaseHhActivity {
     await this.page.fill('input[name="password"]', credentials.password);
     
     // Нажатие кнопки входа
-    await Promise.all([
-      this.page.click('button:has-text("Войти")'),
-      this.page.waitForNavigation({ waitUntil: 'networkidle' })
-    ]);
+    await this.page.click('button:has-text("Войти")');
+    await this.page.waitForNavigation({ waitUntil: 'networkidle' });
 
     // Проверка успешной авторизации
     const isLoggedIn = await this.checkLoginStatus();

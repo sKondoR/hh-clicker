@@ -5,7 +5,9 @@ import { logApiExecution } from '@/lib/api-execution';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
   try {
+    await logApiExecution(pathname, 'start');
     const scraper = new IncreaseHhActivity({ delayBetweenViews: 1000, maxRetries: 3 });
     await scraper.init();
     const scrapParams: SearchParams = {
@@ -14,10 +16,10 @@ export async function GET(request: NextRequest) {
     await scraper.startScrapingCycle(scrapParams);
     await scraper.raiseCV();
     await scraper.close();
-    await logApiExecution('/api/cron', 'success');
+    await logApiExecution(pathname, 'success');
     return NextResponse.json({ success: true, message: 'Cron job executed' });
   } catch (error) {
-    await logApiExecution('/api/cron', 'error', error instanceof Error ? error.message : 'Unknown error');
+    await logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
       { error: 'Cron job failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

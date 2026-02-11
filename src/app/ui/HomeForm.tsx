@@ -12,7 +12,7 @@ const HIGH_ACTIVITY_THRESHOLD = 80;
 
 const HomeForm: React.FC = () => {
   const [isScraping, setIsScraping] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
+  const [progress, setProgress] = useState<number | null | undefined>(undefined);
   const [status, setStatus] = useState('Готов');
   const [query, setQuery] = useState(DEFAULT_QUERY);
 
@@ -85,17 +85,22 @@ const HomeForm: React.FC = () => {
         <div className="mb-6">
           <div className="flex justify-between mb-1">
             <span className="text-sm font-medium text-gray-700">Статус активности</span>
-            <span className="text-sm font-medium text-gray-700">{progress !== null ? `${progress}%` : <FontAwesomeIcon icon={faSpinner} spin />}</span>
+            <span className="text-sm font-medium text-gray-700">
+              {progress === null && '-'}
+              {progress === undefined && <FontAwesomeIcon icon={faSpinner} spin />}
+              {progress !== null && progress !== undefined && `${progress}%`}
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div 
-              className={`${progress !== null && progress > HIGH_ACTIVITY_THRESHOLD ? 'bg-green-600 ' : 'bg-red-600'}
+              className={`
+                ${progress === null || progress === undefined ? 'bg-gray-400 ' : ''}
+                ${progress && (progress > HIGH_ACTIVITY_THRESHOLD ? 'bg-green-600 ' : 'bg-red-600 ')}
                 h-2.5 rounded-full transition-all duration-300`}
               style={{ width: `${progress !== null ? progress : 0}%` }}
             ></div>
           </div>
         </div>
-        
         <div className="mb-6">
           <p className="text-sm text-gray-600">Статус: {status}</p>
         </div>

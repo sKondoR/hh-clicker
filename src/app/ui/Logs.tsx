@@ -48,19 +48,19 @@ export default function Logs() {
           <table className="text-left">
             <thead>
               <tr className="text-pink-700 text-bold">
-                <th className="pr-6 whitespace-nowrap">Endpoint</th>
-                <th className="pr-6 whitespace-nowrap">Status</th>
-                <th className="pr-6 whitespace-nowrap">Time</th>
-                <th>Details</th>
+                <th className="pr-6 whitespace-nowrap px-2 py-1">Endpoint</th>
+                <th className="pr-6 whitespace-nowrap px-2 py-1">Status</th>
+                <th className="pr-6 whitespace-nowrap px-2 py-1">Time</th>
+                <th className="whitespace-nowrap px-2 py-1">Details</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log) => (
-                <tr key={log.id} className="log-entry">
-                  <td className="pr-6 whitespace-nowrap align-top">{log.endpoint}</td>
-                  <td className="pr-6 whitespace-nowrap align-top">{log.status}</td>
-                  <td className="pr-6 whitespace-nowrap align-top">{new Date(log.executedAt).toLocaleString()}</td>
-                  <td className="align-top">{log.details}</td>
+                <tr key={log.id} className="log-entry hover:bg-white/30 border-t border-black/80">
+                  <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.endpoint}</td>
+                  <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.status}</td>
+                  <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{new Date(log.executedAt).toLocaleString()}</td>
+                  <td className="align-top px-2 py-1">{log.details}</td>
                 </tr>
               ))}
             </tbody>

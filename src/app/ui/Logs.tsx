@@ -3,6 +3,9 @@
 import { ApiExecution } from '@/lib/types';
 import { useState, useEffect } from 'react';
 
+// Define polling interval constant
+const POLLING_INTERVAL = 300000; // 5 minutes in milliseconds
+
 export default function Logs() {
   const [logs, setLogs] = useState<ApiExecution[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,10 +28,8 @@ export default function Logs() {
   useEffect(() => {
     fetchLogs();
 
-    // Poll every 5 minutes (300000 ms)
-    const interval = setInterval(() => {
-      fetchLogs();
-    }, 300000);
+    // Set up polling
+    const interval = setInterval(fetchLogs, POLLING_INTERVAL);
 
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
@@ -45,27 +46,29 @@ export default function Logs() {
         <p className="text-sm">Нет доступных логов за последние 7 дней.</p>
       ) : (
         <div className="text-xs h-50 overflow-y-auto text bg-slate-200/50">
-            <table className="text-left w-full relative">
-              <thead className="sticky top-0 z-10 bg-slate-200">
+          <table className="text-left w-full relative">
+            <thead className="sticky top-0 z-10 bg-slate-200">
                 <tr className="text-bold">
-                  <th className="pr-6 whitespace-nowrap px-2 py-1">Endpoint</th>
-                  <th className="pr-6 whitespace-nowrap px-2 py-1">Status</th>
-                  <th className="pr-6 whitespace-nowrap px-2 py-1">Time</th>
-                  <th className="whitespace-nowrap px-2 py-1">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log) => (
+                <th className="pr-6 whitespace-nowrap px-2 py-1">Endpoint</th>
+                <th className="pr-6 whitespace-nowrap px-2 py-1">Status</th>
+                <th className="pr-6 whitespace-nowrap px-2 py-1">Time</th>
+                <th className="whitespace-nowrap px-2 py-1">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
                   <tr key={log.id} className="log-entry hover:bg-white/30 border-t border-black/80">
-                    <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.endpoint}</td>
-                    <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.status}</td>
-                    <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{new Date(log.executedAt).toLocaleString()}</td>
-                    <td className="align-top px-2 py-1">{log.details}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.endpoint}</td>
+                  <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.status}</td>
+                  <td className="pr-6 whitespace-nowrap align-top px-2 py-1">
+                    {new Date(log.executedAt).toLocaleString('ru-RU')}
+                  </td>
+                  <td className="align-top px-2 py-1">{log.details}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

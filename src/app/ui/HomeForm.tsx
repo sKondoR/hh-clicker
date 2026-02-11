@@ -3,11 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { useSSE } from '@/hooks/useSSE';
 
+const DEFAULT_QUERY = 'java';
+const MAX_PROGRESS = 100;
+const HIGH_ACTIVITY_THRESHOLD = 80;
+
 const HomeForm: React.FC = () => {
   const [isScraping, setIsScraping] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [status, setStatus] = useState('Готов');
-  const [query, setQuery] = useState('java');
+  const [query, setQuery] = useState(DEFAULT_QUERY);
 
   // Запрос начального статуса активности при монтировании компонента
   useEffect(() => {
@@ -25,19 +29,19 @@ const HomeForm: React.FC = () => {
   useSSE(setProgress, setStatus);
 
   const startScraping = async () => {
- 
     setIsScraping(true);
     setStatus('Запуск процесса...');
     
     try {
-       const response = await fetch(`/api/activity?query=${encodeURIComponent(query)}`);
-       if (!response.ok) {
+      const response = await fetch(`/api/activity?query=${encodeURIComponent(query)}`);
+      if (!response.ok) {
         const err = await response.text();
         throw new Error(`Error for request /api/activity: ${err}`);
-       }
-       const { activityPercentage } = await response.json();
-       setProgress(activityPercentage);
-       setStatus('Готов');
+      }
+      
+      const { activityPercentage } = await response.json();
+      setProgress(activityPercentage);
+      setStatus('Готов');
     } catch (error) {
       setStatus('Ошибка: ' + (error as Error).message);
     } finally {
@@ -50,7 +54,10 @@ const HomeForm: React.FC = () => {
     setStatus('Остановлено пользователем');
   };
 
-  const isButtonDisabled = progress === null || progress === 100 || isScraping;
+  // Button disabled logic
+  const isStartButtonDisabled = progress === null || progress === MAX_PROGRESS || isScraping;
+  const isStopButtonDisabled = !isScraping;
+
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
       <h1 className="text-3xl font-bold text-teal-700">
@@ -79,7 +86,7 @@ const HomeForm: React.FC = () => {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div 
-              className={`${progress !== null && progress > 80 ? 'bg-green-600 ' : 'bg-red-600'}
+              className={`${progress !== null && progress > HIGH_ACTIVITY_THRESHOLD ? 'bg-green-600 ' : 'bg-red-600'}
                 h-2.5 rounded-full transition-all duration-300`}
               style={{ width: `${progress !== null ? progress : 0}%` }}
             ></div>
@@ -93,9 +100,9 @@ const HomeForm: React.FC = () => {
         <div className="flex space-x-4">
           <button
             onClick={startScraping}
-            disabled={isButtonDisabled}
-            className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50
-              ${isButtonDisabled ? '' : ' cursor-pointer hover:bg-green-700'}
+            disabled={isStartButtonDisabled}
+            className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50
+              ${isStartButtonDisabled ? '' : ' cursor-pointer hover:bg-green-700'}
             `}
           >
             {isScraping ? 'Выполняется...' : 'Повысить активность'}
@@ -103,9 +110,9 @@ const HomeForm: React.FC = () => {
           
           <button
             onClick={stopScraping}
-            disabled={!isScraping}
-            className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50
-              ${isScraping ? ' cursor-pointer hover:bg-red-700' : ''}
+            disabled={isStopButtonDisabled}
+            className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50
+              ${isStopButtonDisabled ? '' : ' cursor-pointer hover:bg-red-700'}
             `}
           >
             Остановить

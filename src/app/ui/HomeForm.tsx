@@ -50,7 +50,7 @@ const HomeForm: React.FC = () => {
     setStatus('Остановлено пользователем');
   };
 
-  const isButtonDisabled = progress === 100 || isScraping;
+  const isButtonDisabled = progress === null || progress === 100 || isScraping;
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
       <h1 className="text-3xl font-bold text-teal-700">

@@ -5,6 +5,9 @@ import Logs from "./ui/Logs";
 export default function Page() {
   return <div>
     <HomeForm />
-    <Logs />
+    <div className="logs-container mx-20">
+      <h2 className="text-xl mb-2">Логи за неделю:</h2>
+      <Logs />
+    </div>
   </div>;
 }

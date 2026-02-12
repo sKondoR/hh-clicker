@@ -1,8 +1,9 @@
 import './globals.css';
+import { Providers } from './providers';
 
 export const metadata = {
-  title: 'HH Clicker',
-  description: 'HH Clicker - Автоматическое повышение активности на HeadHunter',
+  title: 'HH Activity Clicker',
+  description: 'HH Activity Clicker - Автоматическое повышение активности на HeadHunter',
 }
 
 export default function RootLayout({
@@ -13,7 +14,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">{children}</div>
+        <Providers>
+          <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">{children}</div>
+        </Providers>
       </body>
     </html>
   )

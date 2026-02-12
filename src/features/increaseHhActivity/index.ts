@@ -26,8 +26,8 @@ export class IncreaseHhActivity {
 
     this.browser = await plChromium.launch({ 
       executablePath,
-      // headless: false,
-      headless: process.env.NODE_ENV === 'production',
+      headless: false,
+      // headless: process.env.NODE_ENV === 'production',
       args: [
         '--no-sandbox',                    // Отключает sandbox-защиту Chromium. Полезно в изолированных средах (например, Docker), где sandbox может вызывать проблемы. ⚠️ Опасно в ненадёжных окружениях.
         '--disable-setuid-sandbox',        // Отключает setuid sandbox, который иногда несовместим с контейнерами.
@@ -44,7 +44,8 @@ export class IncreaseHhActivity {
     // Блокировка ресурсов для ускорения
     await this.page.route('**/*', (route) => {
       const resourceType = route.request().resourceType();
-      const blockedResources = ['image', 'stylesheet', 'font', 'media'];
+      // const blockedResources = ['image', 'stylesheet', 'font', 'media'];
+      const blockedResources = ['image', 'font', 'media'];
       if (blockedResources.includes(resourceType)) {
         route.abort();
       } else {

@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
     await scraper.startScrapingCycle(scrapParams);
     await scraper.raiseCV();
     await scraper.close();
-    await logApiExecution(pathname, 'success');
+    logApiExecution(pathname, 'raise activity by cron');
     return NextResponse.json({ success: true, message: 'Cron job executed' });
   } catch (error) {
-    await logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');
+    logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
       { error: 'Cron job failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

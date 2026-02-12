@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
       if (!query) {
         const activityStatus = await scraper.getActivityStatus();
         activityPercentage = activityStatus.percentage;
+        logApiExecution(pathname, `request activity - ${activityPercentage}%`);
       } else {
         const scrapParams: SearchParams = {
             query,
         };
         activityPercentage = await scraper.startScrapingCycle(scrapParams);
         await scraper.raiseCV();
-        await scraper.close();
-        await logApiExecution(pathname, `success - ${activityPercentage}%`);
+        logApiExecution(pathname, `raise activity - ${activityPercentage}%`);
       }
       const data = { success: true, activityPercentage: activityPercentage };
       await scraper.close();
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error) {
-    await logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');
+    logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');
     console.error('API Error:', error);
     return NextResponse.json(
       { error: 'Failed to get current activity status' },

@@ -4,7 +4,7 @@ import { ApiExecution } from '@/lib/types';
 import { useState, useEffect } from 'react';
 
 // Define polling interval constant
-const POLLING_INTERVAL = 300000; // 5 minutes in milliseconds
+const POLLING_INTERVAL = 60000; // 1 minute in milliseconds
 
 export default function Logs() {
   const [logs, setLogs] = useState<ApiExecution[]>([]);

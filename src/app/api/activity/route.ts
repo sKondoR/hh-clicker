@@ -29,10 +29,10 @@ export async function GET(request: NextRequest) {
         logApiExecution(pathname, `raise activity - ${activityPercentage}%`);
       }
       const data = { success: true, activityPercentage: activityPercentage };
-      await scraper.close();
+      scraper.close();
       return NextResponse.json(data);
     } else {
-      await scraper.close();
+      scraper.close();
       return NextResponse.json(
         { error: 'Failed to login for status check' },
         { status: 500 }

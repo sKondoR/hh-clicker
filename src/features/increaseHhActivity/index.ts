@@ -245,7 +245,7 @@ export class IncreaseHhActivity {
        console.log('getActivityStatus: ', percentage, broadcastProgress);
       if (broadcastProgress) {
         console.log('SSE sends percentage: ', percentage);
-        broadcastProgress(percentage, `уровень активности: ${percentage}%`);
+        broadcastProgress(percentage, `Текущий уровень активности: ${percentage}%`);
       }
       return {
         percentage,
@@ -272,7 +272,7 @@ export class IncreaseHhActivity {
     }
 
     let activityStatus = await this.getActivityStatus();
-    console.log(`уровень активности: ${activityStatus.percentage}%`);
+    console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
 
     const neededNewVacancies = Math.ceil((FULL_PROGRESS - activityStatus.percentage) / 2);
 

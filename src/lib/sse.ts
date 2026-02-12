@@ -27,6 +27,7 @@ export const connections = new Set<SSEConnection>();
 export function broadcastProgress(progress: number, status: string) {
   console.log('inside broadcastProgress', connections);
   connections.forEach(connection => {
+    console.log('connection.send', progress, status);
     connection.send({ progress, status, timestamp: new Date().toISOString() });
   });
 }

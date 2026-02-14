@@ -38,3 +38,8 @@ next-env.d.ts
 
 #drizzle
 drizzle
+
+.agents
+.ai-factory
+.serena
+.ai-factory.json

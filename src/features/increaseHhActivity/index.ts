@@ -9,59 +9,140 @@ import { loadVisitedVacancies, saveVisitedVacancy } from '@/lib/api-visited';
 const chromium = require('@sparticuz/chromium');
 const FULL_PROGRESS = 100;
 
-export class IncreaseHhActivity {
+// Синглтон для управления браузером на Vercel
+export class BrowserManager {
+  private static instance: BrowserManager;
   private browser: Browser | null = null;
   private page: Page | null = null;
+  private isInitializing = false;
+  private initializationPromise: Promise<void> | null = null;
+
+  private constructor() {}
+
+  static getInstance(): BrowserManager {
+    if (!BrowserManager.instance) {
+      BrowserManager.instance = new BrowserManager();
+    }
+    return BrowserManager.instance;
+  }
+
+  async init(): Promise<void> {
+    if (this.browser && this.page) {
+      return;
+    }
+
+    if (this.isInitializing) {
+      await this.initializationPromise;
+      return;
+    }
+
+    this.isInitializing = true;
+    this.initializationPromise = this.createBrowser();
+    await this.initializationPromise;
+    this.isInitializing = false;
+    this.initializationPromise = null;
+  }
+
+  private async createBrowser(): Promise<void> {
+    const executablePath = process.env.VERCEL
+      ? await chromium.executablePath()
+      : plChromium.executablePath();
+
+    try {
+      this.browser = await plChromium.launch({ 
+        executablePath,
+        headless: process.env.NODE_ENV === 'production',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process',
+          '--single-process',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--window-size=1920,1080',
+          '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        ],
+        timeout: 30000
+      });
+
+      this.page = await this.browser.newPage();
+
+      // Блокировка ресурсов для ускорения
+      await this.page.route('**/*', (route) => {
+        const resourceType = route.request().resourceType();
+        const blockedResources = ['image', 'font', 'media'];
+        if (blockedResources.includes(resourceType)) {
+          route.abort();
+        } else {
+          route.continue();
+        }
+      });
+      
+      // Установка дополнительных заголовков для имитации реального пользователя
+      await this.page.setExtraHTTPHeaders({
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
+      });
+
+      console.log('Браузер успешно инициализирован');
+    } catch (error) {
+      console.error('Ошибка при запуске браузера:', error);
+      await this.recreateBrowser();
+      throw error;
+    }
+  }
+
+  async recreateBrowser(): Promise<void> {
+    console.log('Перезапуск браузера...');
+    
+    if (this.browser) {
+      try {
+        await this.browser.close();
+      } catch (error) {
+        console.error('Ошибка при закрытии браузера:', error);
+      }
+    }
+
+    this.browser = null;
+    this.page = null;
+    await this.createBrowser();
+  }
+
+  async getPage(): Promise<Page> {
+    if (!this.page) {
+      await this.init();
+    }
+    return this.page!;
+  }
+
+  async close(): Promise<void> {
+    if (this.browser) {
+      try {
+        await this.browser.close();
+        console.log('Браузер закрыт');
+      } catch (error) {
+        console.error('Ошибка при закрытии браузера:', error);
+      }
+      this.browser = null;
+      this.page = null;
+    }
+  }
+}
+
+export class IncreaseHhActivity {
   private config: ScrapingConfig;
   private visitedVacancies: Set<string> = new Set();
+  private browserManager = BrowserManager.getInstance();
 
   constructor(config: ScrapingConfig = { delayBetweenViews: 3000, maxRetries: 3 }) {
     this.config = config;
   }
 
   async init(): Promise<void> {
-    const executablePath = process.env.VERCEL
-      ? await chromium.executablePath()
-      : plChromium.executablePath();
-
-    this.browser = await plChromium.launch({ 
-      executablePath,
-      headless: process.env.NODE_ENV === 'production',
-      args: [
-        '--no-sandbox',                    // Отключает sandbox-защиту Chromium. Полезно в изолированных средах (например, Docker), где sandbox может вызывать проблемы. ⚠️ Опасно в ненадёжных окружениях.
-        '--disable-setuid-sandbox',        // Отключает setuid sandbox, который иногда несовместим с контейнерами.
-        '--disable-dev-shm-usage',         // Заставляет использовать временные файлы вместо /dev/shm, что полезно при ограниченной памяти в Docker (по умолчанию /dev/shm маленький).
-        '--disable-gpu',                   // Отключаеsт GPU-ускорение. Уменьшает потребление памяти и предотвращает ошибки в headless-режиме (где нет графического интерфейса).
-        '--disable-web-security',          // Отключает политику одинакового происхождения (same-origin policy). Полезно для тестов, но ⚠️ делает браузер уязвимым к XSS и другим атакам.
-        '--disable-features=IsolateOrigins,site-per-process', // Отключает изоляцию происхождений и режим "по сайту — отдельный процесс", что может помочь обойти некоторые CORS-ограничения.
-        '--single-process',                 // ⚠️ Может помочь при нехватке памяти
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--window-size=1920,1080',
-        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      ],
-      timeout: 30000
-    });
-
-    this.page = await this.browser.newPage();
-
-    // Блокировка ресурсов для ускорения
-    await this.page.route('**/*', (route) => {
-      const resourceType = route.request().resourceType();
-      // const blockedResources = ['image', 'stylesheet', 'font', 'media'];
-      const blockedResources = ['image', 'font', 'media'];
-      if (blockedResources.includes(resourceType)) {
-        route.abort();
-      } else {
-        route.continue();
-      }
-    });
-    
-    // Установка дополнительных заголовков для имитации реального пользователя
-    await this.page.setExtraHTTPHeaders({
-      'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
-    });
+    await this.browserManager.init();
   }
 
   async login(): Promise<boolean> {
@@ -72,33 +153,31 @@ export class IncreaseHhActivity {
     if (!credentials.username || !credentials.password) {
       throw new Error('Credentials not found in environment variables');
     }
-    if (!this.page) throw new Error('Browser not initialized');
 
-    await this.page.goto('https://spb.hh.ru/account/login');
+    const page = await this.browserManager.getPage();
+    await page.goto('https://spb.hh.ru/account/login');
 
     // Клик по "Войти"
-    await this.page.click('button:has-text("Войти")');
+    await page.click('button:has-text("Войти")');
 
     // Клик по "Почта"
-    await this.page.click('div[class^="magritte-label"]:has-text("Почта")');
+    await page.click('div[class^="magritte-label"]:has-text("Почта")');
 
-    // // Ждём появления радио-кнопки для EMAIL
-    // await this.page.waitForSelector('input[data-qa="credential-type-EMAIL"]');
-    await this.page.click('button:has-text("Войти с паролем")');
+    await page.click('button:has-text("Войти с паролем")');
 
     // Ожидание загрузки формы
-    await this.page.waitForSelector('input[name="username"]');
-    await this.page.fill('input[name="username"]', credentials.username);
+    await page.waitForSelector('input[name="username"]');
+    await page.fill('input[name="username"]', credentials.username);
 
     // Клик по разделу "Войти с паролем"
-    await this.page.click('button:has-text("Войти с паролем")');
+    await page.click('button:has-text("Войти с паролем")');
     
     // Ввод пароля
-    await this.page.fill('input[name="password"]', credentials.password);
+    await page.fill('input[name="password"]', credentials.password);
     
     // Нажатие кнопки входа
-    await this.page.click('button:has-text("Войти")');
-    await this.page.waitForURL('https://spb.hh.ru/');
+    await page.click('button:has-text("Войти")');
+    await page.waitForURL('https://spb.hh.ru/');
 
     // Проверка успешной авторизации
     const isLoggedIn = await this.checkLoginStatus();
@@ -113,10 +192,9 @@ export class IncreaseHhActivity {
   }
 
   async checkLoginStatus(): Promise<boolean> {
-    if (!this.page) return false;
+    const page = await this.browserManager.getPage();
     try {
-      // Проверяем наличие элементов, присутствующих только после входа
-      const profileElements = await this.page.$$('[class^="magritte-button"]:has-text("Создать резюме")');
+      const profileElements = await page.$$('[class^="magritte-button"]:has-text("Создать резюме")');
       return profileElements.length > 0;
     } catch (error) {
       console.error('Ошибка проверки статуса входа:', error);
@@ -125,16 +203,15 @@ export class IncreaseHhActivity {
   }
 
   async getPagesCount(): Promise<number> {
-    if (!this.page) throw new Error('Browser not initialized');
-
-    const pagerPages = await this.page.locator('[data-qa="pager-page"]').all();
+    const page = await this.browserManager.getPage();
+    const pagerPages = await page.locator('[data-qa="pager-page"]').all();
     const lastPageElement = pagerPages[pagerPages.length - 1];
     const lastPageText = await lastPageElement.textContent();
     return parseInt(lastPageText || '1');
   }  
 
   async searchVacancies(params: SearchParams, neededNewVacancies: number): Promise<string[]> {
-    if (!this.page) throw new Error('Browser not initialized');
+    const page = await this.browserManager.getPage();
 
     // Загружаем список уже посещенных вакансий
     this.visitedVacancies = await loadVisitedVacancies();
@@ -142,8 +219,8 @@ export class IncreaseHhActivity {
     const searchUrl = `https://spb.hh.ru/search/vacancy?salary=&ored_clusters=true&hhtmFrom=vacancy_search_list&hhtmFromLabel=vacancy_search_line`;
     
     // Переход на главную страницу
-    await this.page.goto(`${searchUrl}&text=${params.query}`, { waitUntil: 'domcontentloaded' });
-    await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
+    await page.goto(`${searchUrl}&text=${params.query}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-qa="vacancy-serp__results"]');
   
     // Проверка, есть ли еще страницы с результатами
     const pageCount = await this.getPagesCount();
@@ -152,10 +229,10 @@ export class IncreaseHhActivity {
     let currentPage = pageCount - 1;
     
     while (newVacancies.length < neededNewVacancies && currentPage >= 0) {
-      await this.page.goto(`${searchUrl}&text=${params.query}&page=${currentPage}`);
-      await this.page.waitForSelector('[data-qa="vacancy-serp__results"]');
+      await page.goto(`${searchUrl}&text=${params.query}&page=${currentPage}`);
+      await page.waitForSelector('[data-qa="vacancy-serp__results"]');
       
-      const vacancyLinks = await this.page.evaluate(() => {
+      const vacancyLinks = await page.evaluate(() => {
         const links = Array.from(document.querySelectorAll<HTMLLinkElement>('a[data-qa="serp-item__title"]'));
         return links.map(link => link.href);
       });
@@ -179,12 +256,12 @@ export class IncreaseHhActivity {
   }
 
   async openVacancy(vacancyUrl: string): Promise<void> {
-    if (!this.page) throw new Error('Page not initialized');
+    const page = await this.browserManager.getPage();
 
     try {
       // Просто переходим по ссылке (в текущей вкладке)
       await Promise.all([
-        this.page.click(`a[href="${vacancyUrl}"]`)
+        page.click(`a[href="${vacancyUrl}"]`)
       ]);
 
       console.log(`Открыта вакансия: ${getIdFromUrl(vacancyUrl)}`);
@@ -201,19 +278,18 @@ export class IncreaseHhActivity {
   }
 
   async getActivityStatus(): Promise<ActivityStatus> {
-    if (!this.page) throw new Error('Browser not initialized');
+    const page = await this.browserManager.getPage();
 
     // Поиск элемента, содержащего информацию об активности
     try {
-          // Импортируем broadcastProgress только если он доступен
       let broadcastProgress: ((progress: number, status: string) => void) | undefined;
       try {
         ({ broadcastProgress } = await import('../../lib/sse'));
       } catch (error) {
         console.warn('SSE progress broadcasting is not available:', error);
       }
-      // Попробуем найти элемент, связанный с активностью соискателя
-      const activityElements = await this.page.$$('.bloko-progress-bar, [data-qa*="activity"], .applicant-proficiency-rate');
+      
+      const activityElements = await page.$$('.bloko-progress-bar, [data-qa*="activity"], .applicant-proficiency-rate');
       
       let percentage = 0;
       
@@ -229,15 +305,12 @@ export class IncreaseHhActivity {
       
       // Если не нашли через поиск элементов, пробуем другие способы
       if (percentage === 0) {
-        // Возможно, информация об активности находится в другом месте
-        const textBasedSearch = await this.page.evaluate(() => {
-          // Ищем текст, содержащий слова, связанные с активностью
+        const textBasedSearch = await page.evaluate(() => {
           const bodyText = document.body.innerText.toLowerCase();
           
           if (bodyText.includes('активность') || bodyText.includes('activity')) {
             const percentMatches = bodyText.match(/(\d+)%/g);
             if (percentMatches) {
-              // Возвращаем наибольший найденный процент
               return Math.max(...percentMatches.map(match => parseInt(match)));
             }
           }
@@ -269,7 +342,6 @@ export class IncreaseHhActivity {
   }
 
   async startScrapingCycle(searchParams: SearchParams): Promise<number> {
-    // Импортируем broadcastProgress только если он доступен
     let broadcastProgress: ((progress: number, status: string) => void) | undefined;
     try {
       ({ broadcastProgress } = await import('../../lib/sse'));
@@ -294,7 +366,6 @@ export class IncreaseHhActivity {
       console.log(`Найдено ${vacancyLinks.length} новых вакансий`);
       
       for (const url of vacancyLinks) {
-        // toDo: comment for testing
         if (activityStatus.percentage >= FULL_PROGRESS) {
           break;
         }
@@ -302,8 +373,8 @@ export class IncreaseHhActivity {
         console.log(`Открываю вакансию: ${getIdFromUrl(url)}`);
         await this.openVacancy(url);
         
-        // Задержка между открытиями вакансий
-        await this.page!.waitForTimeout(this.config.delayBetweenViews);
+        // Задержка между открытием вакансий
+        await (await this.browserManager.getPage()).waitForTimeout(this.config.delayBetweenViews);
         
         // Проверяем статус активности
         activityStatus = await this.getActivityStatus();
@@ -314,7 +385,6 @@ export class IncreaseHhActivity {
           broadcastProgress(activityStatus.percentage, `Текущий уровень активности: ${activityStatus.percentage}%`);
         }
         
-        // toDo: comment for testing
         if (activityStatus.percentage >= FULL_PROGRESS) {
           console.log('Достигнут максимальный уровень активности 100%');
         
@@ -332,15 +402,15 @@ export class IncreaseHhActivity {
   }
 
   async raiseCV(): Promise<void> {
-    if (!this.page) throw new Error('Browser not initialized');
+    const page = await this.browserManager.getPage();
     const cvUrl = `https://spb.hh.ru/applicant/resumes`;
     
     // Переход на главную страницу
-    await this.page.goto(cvUrl, { waitUntil: 'domcontentloaded' });
+    await page.goto(cvUrl, { waitUntil: 'domcontentloaded' });
 
-    const button = await this.page.$('button:has-text("Поднять в поиске")');
+    const button = await page.$('button:has-text("Поднять в поиске")');
     if (button) {
-      await this.page.click('button:has-text("Поднять в поиске")');
+      await page.click('button:has-text("Поднять в поиске")');
       console.log('Кликнул на Поднять в поиске');
     } else {
       console.log('Кнопка "Поднять в поиске" не найдена');
@@ -348,11 +418,6 @@ export class IncreaseHhActivity {
   }
 
   async close(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
-      this.page = null;
-    }
+    await this.browserManager.close();
   }
 }
-

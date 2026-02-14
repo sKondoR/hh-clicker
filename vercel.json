@@ -1,8 +1,30 @@
 {
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    }
+  },
   "crons": [
     {
       "path": "/api/cron",
-      "schedule": "0 4 * * *" 
+      "schedule": "0 4 * * *",
+      "tz": "Europe/Moscow"
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/activity/route.ts": {
+      "maxDuration": 300,
+      "memory": 2048
+    },
+    "src/app/api/cron/route.ts": {
+      "maxDuration": 600,
+      "memory": 1024
+    }
+  },
+  "env": {
+    "PUPPETEER_EXECUTABLE_PATH": "@sparticuz/chromium"
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs"
 }

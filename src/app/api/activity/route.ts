@@ -14,6 +14,15 @@ export async function GET(request: NextRequest) {
     const scraper = new IncreaseHhActivity({ delayBetweenViews: 1000, maxRetries: 3 });
     await scraper.init();
     
+    // Проверяем, не закрыт ли браузер
+    try {
+      await scraper.getActivityStatus();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      console.log('Браузер закрыт, перезапуск...');
+      await scraper.init();
+    }
+
     if (await scraper.login()) {
       let activityPercentage;
       if (!query) {
@@ -29,10 +38,8 @@ export async function GET(request: NextRequest) {
         logApiExecution(pathname, `raise activity - ${activityPercentage}%`);
       }
       const data = { success: true, activityPercentage: activityPercentage };
-      scraper.close();
       return NextResponse.json(data);
     } else {
-      scraper.close();
       return NextResponse.json(
         { error: 'Failed to login for status check' },
         { status: 500 }

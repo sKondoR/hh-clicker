@@ -5,21 +5,44 @@ import { logApiExecution } from '@/lib/api-execution';
 
 export async function GET(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  
   try {
-    const scraper = new IncreaseHhActivity({ delayBetweenViews: 1000, maxRetries: 3 });
+    // Логирование начала выполнения cron задачи
+    logApiExecution(pathname, 'cron job started');
+    
+    const scraper = new IncreaseHhActivity({ 
+      delayBetweenViews: 1000, 
+      maxRetries: 3 
+    });
+    
     await scraper.init();
-    const scrapParams: SearchParams = {
-        query: 'java',
+    
+    const scrapParams = {
+      query: 'java',
     };
+    
     await scraper.startScrapingCycle(scrapParams);
     await scraper.raiseCV();
     await scraper.close();
-    logApiExecution(pathname, 'raise activity by cron');
-    return NextResponse.json({ success: true, message: 'Cron job executed' });
+    
+    // Логирование успешного выполнения
+    logApiExecution(pathname, 'cron job completed successfully');
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Cron job executed successfully' 
+    });
+    
   } catch (error) {
-    logApiExecution(pathname, 'error', error instanceof Error ? error.message : 'Unknown error');
+    // Детальное логирование ошибок
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logApiExecution(pathname, 'cron job failed', errorMessage);
+    
     return NextResponse.json(
-      { error: 'Cron job failed', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Cron job failed', 
+        details: errorMessage 
+      },
       { status: 500 }
     );
   }

@@ -1,4 +1,6 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096"
@@ -8,7 +10,8 @@
     {
       "path": "/api/cron",
       "schedule": "0 4 * * *",
-      "tz": "Europe/Moscow"
+      "tz": "Europe/Moscow",
+      "retry": 3
     }
   ],
   "functions": {

@@ -81,6 +81,35 @@
          "alwaysAllow":[
             "sequentialthinking_tools"
          ]
+      },
+      "filesystem": {
+         "type": "stdio",
+         "command": "npx",
+         "args": [
+            "-y",
+            "@modelcontextprotocol/server-filesystem",
+            "C:\\Users\\kondr\\_projects\\HH-clicker"
+         ],
+         "disabled": false,
+         "alwaysAllow": ["list_dir", "find_file", "read_file", "write_file", "delete_file"]
+      },
+      "puppeteer": {
+         "type": "stdio",
+         "command": "npx",
+         "args": [
+            "-y",
+            "@modelcontextprotocol/server-puppeteer"
+         ],
+         "disabled": false,
+         "alwaysAllow":[
+            "puppeteer_navigate",
+            "puppeteer_screenshot",
+            "puppeteer_click",
+            "puppeteer_fill",
+            "puppeteer_select",
+            "puppeteer_hover",
+            "puppeteer_evaluate"
+         ]
       }
    }
 }

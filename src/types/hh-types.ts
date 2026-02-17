@@ -11,7 +11,7 @@ export interface SearchParams {
 }
 
 export interface ActivityStatus {
-  percentage: number;
+  percentage: number | null;
   statusText: string;
   lastUpdated: Date;
 }

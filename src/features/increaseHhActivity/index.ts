@@ -368,7 +368,7 @@ export class IncreaseHhActivity {
       if (!page || page.isClosed()) {
         console.log('Браузер закрыт');
         return {
-          percentage: 0,
+          percentage: null,
           statusText: 'Браузер закрыт',
           lastUpdated: new Date()
         };
@@ -386,7 +386,7 @@ export class IncreaseHhActivity {
       if (!currentUrl.includes('spb.hh.ru')) {
         console.log('Не на странице HH, текущий URL:', currentUrl);
         return {
-          percentage: 0,
+          percentage: null,
           statusText: 'Не на странице HH',
           lastUpdated: new Date()
         };
@@ -454,8 +454,8 @@ export class IncreaseHhActivity {
     }
   }
 
-  async startScrapingCycle(searchParams: SearchParams): Promise<number> {
-    let broadcastProgress: ((progress: number, status: string) => void) | undefined;
+  async startScrapingCycle(searchParams: SearchParams): Promise<number | null> {
+    let broadcastProgress: ((progress: number | null, status: string) => void) | undefined;
     try {
       ({ broadcastProgress } = await import('../../lib/sse'));
     } catch (error) {
@@ -463,23 +463,28 @@ export class IncreaseHhActivity {
     }
 
     let activityStatus = await this.getActivityStatus();
-    console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
+    console.log(`Текущий уровень активности: ${activityStatus.percentage || 'null'}%`);
+    if (activityStatus.percentage === null) {
+      console.log(`Текущий уровень активности неизвестен`);
+      return activityStatus.percentage;
+    }
 
-    const neededNewVacancies = Math.ceil((FULL_PROGRESS - activityStatus.percentage) / 2);
+    const currentPercentage = activityStatus.percentage;
+    const neededNewVacancies = Math.ceil((FULL_PROGRESS - currentPercentage) / 2);
 
      if (neededNewVacancies > 0) {
       console.log(`Нужно открыть ${neededNewVacancies} новых вакансий`);
      } else {
       console.log(`Увеличение активности не требуется`);
-      return activityStatus.percentage;
+      return currentPercentage;
      }
       
-    while (activityStatus.percentage < FULL_PROGRESS) {
+    while (currentPercentage < FULL_PROGRESS) {
       const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
       console.log(`Найдено ${vacancyLinks.length} новых вакансий`);
       
       for (const url of vacancyLinks) {
-        if (activityStatus.percentage >= FULL_PROGRESS) {
+        if (currentPercentage >= FULL_PROGRESS) {
           break;
         }
         
@@ -491,20 +496,28 @@ export class IncreaseHhActivity {
         
         // Проверяем статус активности
         activityStatus = await this.getActivityStatus();
-        console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
+        const updatedPercentage = activityStatus.percentage;
+        // if (updatedPercentage === null) {
+        //   console.log(`Текущий уровень активности неизвестен`);
+        //   return updatedPercentage;
+        // }
+        console.log(`Текущий уровень активности: ${updatedPercentage}%`);
         
         // Отправляем обновление прогресса клиенту через SSE
         if (broadcastProgress) {
-          broadcastProgress(activityStatus.percentage, `Текущий уровень активности: ${activityStatus.percentage}%`);
+          broadcastProgress(updatedPercentage, `Текущий уровень активности: ${updatedPercentage}%`);
         }
         
-        if (activityStatus.percentage >= FULL_PROGRESS) {
+        if (updatedPercentage === null) {
+          break;
+        }
+        if (updatedPercentage >= FULL_PROGRESS) {
           console.log('Достигнут максимальный уровень активности 100%');
         
-        // Отправляем финальное обновление прогресса клиенту через SSE
-        if (broadcastProgress) {
-          broadcastProgress(100, 'Достигнут максимальный уровень активности 100%');
-        }
+          // Отправляем финальное обновление прогресса клиенту через SSE
+          if (broadcastProgress) {
+            broadcastProgress(100, 'Достигнут максимальный уровень активности 100%');
+          }
           break;
         }
       }

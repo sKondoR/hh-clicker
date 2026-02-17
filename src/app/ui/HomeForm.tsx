@@ -66,7 +66,7 @@ const HomeForm: React.FC = () => {
   };
 
   // Button disabled logic
-  const isStartButtonDisabled = progress === null || progress === undefined || progress === MAX_PROGRESS || isScraping;
+  const isStartButtonDisabled = progress === undefined || progress === MAX_PROGRESS || isScraping;
   const isStopButtonDisabled = !isScraping;
 
   return (
@@ -94,7 +94,7 @@ const HomeForm: React.FC = () => {
           <div className="flex justify-between mb-1">
             <span className="text-sm font-medium text-gray-700">Статус активности</span>
             <span className="text-sm font-medium text-gray-700">
-              {progress === null && '-'}
+              {progress === null && '?'}
               {progress === undefined && <FontAwesomeIcon icon={faSpinner} spin />}
               {progress !== null && progress !== undefined && `${progress}%`}
             </span>

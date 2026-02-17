@@ -154,48 +154,131 @@ export class IncreaseHhActivity {
       throw new Error('Credentials not found in environment variables');
     }
 
-    const page = await this.browserManager.getPage();
-    await page.goto('https://spb.hh.ru/account/login');
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    // Клик по "Войти"
-    await page.click('button:has-text("Войти")');
+    while (retryCount < maxRetries) {
+      try {
+        const page = await this.browserManager.getPage();
+        
+        // Проверяем, что браузер и страница доступны
+        if (!page || page.isClosed()) {
+          throw new Error('Браузер или страница закрыты');
+        }
 
-    // Клик по "Почта"
-    await page.click('div[class^="magritte-label"]:has-text("Почта")');
+        await page.goto('https://spb.hh.ru/account/login', { 
+          waitUntil: 'domcontentloaded',
+          timeout: 30000 
+        });
 
-    await page.click('button:has-text("Войти с паролем")');
+        // Клик по "Войти"
+        await page.click('button:has-text("Войти")');
 
-    // Ожидание загрузки формы
-    await page.waitForSelector('input[name="username"]');
-    await page.fill('input[name="username"]', credentials.username);
+        // Клик по "Почта"
+        await page.click('div[class^="magritte-label"]:has-text("Почта")');
 
-    // Клик по разделу "Войти с паролем"
-    await page.click('button:has-text("Войти с паролем")');
-    
-    // Ввод пароля
-    await page.fill('input[name="password"]', credentials.password);
-    
-    // Нажатие кнопки входа
-    await page.click('button:has-text("Войти")');
-    await page.waitForURL('https://spb.hh.ru/');
+        await page.click('button:has-text("Войти с паролем")');
 
-    // Проверка успешной авторизации
-    const isLoggedIn = await this.checkLoginStatus();
-    
-    if (isLoggedIn) {
-      console.log('Успешный вход в систему');
-      return true;
-    } else {
-      console.error('Ошибка авторизации');
-      return false;
+        // Ожидание загрузки формы
+        await page.waitForSelector('input[name="username"]', { timeout: 10000 });
+        await page.fill('input[name="username"]', credentials.username);
+
+        // Клик по разделу "Войти с паролем"
+        await page.click('button:has-text("Войти с паролем")');
+        
+        // Ввод пароля
+        await page.fill('input[name="password"]', credentials.password);
+        
+        // Нажатие кнопки входа
+        await page.click('button:has-text("Войти")');
+        
+        // Используем более надежный подход вместо waitForURL
+        try {
+          await page.waitForLoadState('networkidle', { timeout: 10000 });
+          await page.waitForURL('https://spb.hh.ru/', { timeout: 10000 });
+        } catch (urlError) {
+          console.warn('waitForURL не сработал, проверяем текущий URL:', urlError);
+          // Проверяем текущий URL и при необходимости переходим
+          const currentUrl = page.url();
+          if (!currentUrl.includes('spb.hh.ru')) {
+            await page.goto('https://spb.hh.ru/', { waitUntil: 'domcontentloaded' });
+          }
+        }
+
+        // Проверка успешной авторизации
+        const isLoggedIn = await this.checkLoginStatus();
+        
+        if (isLoggedIn) {
+          console.log('Успешный вход в систему');
+          return true;
+        } else {
+          console.error('Ошибка авторизации, попытка:', retryCount + 1);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await this.browserManager.recreateBrowser();
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Пауза перед повторной попыткой
+          }
+        }
+      } catch (error) {
+        console.error(`Ошибка при попытке входа ${retryCount + 1}/${maxRetries}:`, error);
+        retryCount++;
+        if (retryCount < maxRetries) {
+          try {
+            await this.browserManager.recreateBrowser();
+            await new Promise(resolve => setTimeout(resolve, 3000)); // Пауза перед повторной попыткой
+          } catch (recreateError) {
+            console.error('Ошибка при перезапуске браузера:', recreateError);
+          }
+        }
+      }
     }
+
+    console.error('Все попытки входа не удалась');
+    return false;
   }
 
   async checkLoginStatus(): Promise<boolean> {
-    const page = await this.browserManager.getPage();
     try {
-      const profileElements = await page.$$('[class^="magritte-button"]:has-text("Создать резюме")');
-      return profileElements.length > 0;
+      const page = await this.browserManager.getPage();
+      
+      // Проверяем, что браузер и страница доступны
+      if (!page || page.isClosed()) {
+        return false;
+      }
+
+      // Используем несколько способов проверки успешного входа
+      const checks = [
+        // Проверка наличия кнопки "Создать резюме"
+        async () => {
+          const profileElements = await page.$$('[class^="magritte-button"]:has-text("Создать резюме")');
+          return profileElements.length > 0;
+        },
+        // Проверка URL
+        async () => {
+          const currentUrl = page.url();
+          return currentUrl.includes('spb.hh.ru') && !currentUrl.includes('login');
+        },
+        // Проверка наличия элементов личного кабинета
+        async () => {
+          const cabinetElements = await page.$$('.applicant-name, .user-name, [data-qa="header-user-name"]');
+          return cabinetElements.length > 0;
+        }
+      ];
+
+      // Выполняем проверки до первой успешной
+      for (const check of checks) {
+        try {
+          const result = await check();
+          if (result) {
+            return true;
+          }
+        } catch (checkError) {
+          console.warn('Проверка статуса не удалась:', checkError);
+          continue;
+        }
+      }
+
+      return false;
     } catch (error) {
       console.error('Ошибка проверки статуса входа:', error);
       return false;
@@ -278,10 +361,19 @@ export class IncreaseHhActivity {
   }
 
   async getActivityStatus(): Promise<ActivityStatus> {
-    const page = await this.browserManager.getPage();
-
-    // Поиск элемента, содержащего информацию об активности
     try {
+      const page = await this.browserManager.getPage();
+      
+      // Проверяем, что браузер и страница доступны
+      if (!page || page.isClosed()) {
+        console.log('Браузер закрыт');
+        return {
+          percentage: 0,
+          statusText: 'Браузер закрыт',
+          lastUpdated: new Date()
+        };
+      }
+
       let broadcastProgress: ((progress: number, status: string) => void) | undefined;
       try {
         ({ broadcastProgress } = await import('../../lib/sse'));
@@ -289,39 +381,60 @@ export class IncreaseHhActivity {
         console.warn('SSE progress broadcasting is not available:', error);
       }
       
+      // Проверяем текущий URL перед поиском элементов
+      const currentUrl = page.url();
+      if (!currentUrl.includes('spb.hh.ru')) {
+        console.log('Не на странице HH, текущий URL:', currentUrl);
+        return {
+          percentage: 0,
+          statusText: 'Не на странице HH',
+          lastUpdated: new Date()
+        };
+      }
+      
       const activityElements = await page.$$('.bloko-progress-bar, [data-qa*="activity"], .applicant-proficiency-rate');
       
       let percentage = 0;
       
       for (const element of activityElements) {
-        const textContent = await element.textContent();
-        const percentMatch = textContent?.match(/(\d+)%/);
-        
-        if (percentMatch) {
-          percentage = parseInt(percentMatch[1]);
-          break;
+        try {
+          const textContent = await element.textContent();
+          const percentMatch = textContent?.match(/(\d+)%/);
+          
+          if (percentMatch) {
+            percentage = parseInt(percentMatch[1]);
+            break;
+          }
+        } catch (elementError) {
+          console.warn('Ошибка при чтении элемента активности:', elementError);
+          continue;
         }
       }
       
       // Если не нашли через поиск элементов, пробуем другие способы
       if (percentage === 0) {
-        const textBasedSearch = await page.evaluate(() => {
-          const bodyText = document.body.innerText.toLowerCase();
-          
-          if (bodyText.includes('активность') || bodyText.includes('activity')) {
-            const percentMatches = bodyText.match(/(\d+)%/g);
-            if (percentMatches) {
-              return Math.max(...percentMatches.map(match => parseInt(match)));
+        try {
+          const textBasedSearch = await page.evaluate(() => {
+            const bodyText = document.body.innerText.toLowerCase();
+            
+            if (bodyText.includes('активность') || bodyText.includes('activity')) {
+              const percentMatches = bodyText.match(/(\d+)%/g);
+              if (percentMatches) {
+                return Math.max(...percentMatches.map(match => parseInt(match)));
+              }
             }
+            return 0;
+          });
+          
+          if (textBasedSearch > 0) {
+            percentage = textBasedSearch;
           }
-          return 0;
-        });
-        
-        if (textBasedSearch > 0) {
-          percentage = textBasedSearch;
+        } catch (evalError) {
+          console.warn('Ошибка при поиске активности через текст:', evalError);
         }
       }
-       console.log('getActivityStatus: ', percentage, broadcastProgress);
+      
+      console.log('getActivityStatus: ', percentage, broadcastProgress);
       if (broadcastProgress) {
         console.log('SSE sends percentage: ', percentage);
         broadcastProgress(percentage, `Текущий уровень активности: ${percentage}%`);

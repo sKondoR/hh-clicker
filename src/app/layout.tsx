@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-linear-to-br from-slate-950 via-indigo-950 to-slate-950">
         <Providers>
           <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">{children}</div>
         </Providers>

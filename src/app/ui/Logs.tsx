@@ -19,12 +19,12 @@ interface LogsTableRowProps {
 
 const LogsTableHeader = ({ columns }: LogsTableHeaderProps) => {
   return (
-    <thead className="sticky top-0 z-10 bg-slate-200">
-      <tr>
+    <thead className="sticky top-0 z-10">
+      <tr className="border-b border-white/10 bg-linear-to-b from-slate-900 via-indigo-950 to-slate-900">
         {columns.map((column) => (
           <th
             key={column.key}
-            className={`pr-6 whitespace-nowrap px-2 py-1 font-semibold ${column.className || ''}`}
+            className={`pr-6 whitespace-nowrap px-2 py-3 text-left text-slate-200 font-semibold text-sm ${column.className || ''}`}
           >
             {column.label}
           </th>
@@ -36,13 +36,13 @@ const LogsTableHeader = ({ columns }: LogsTableHeaderProps) => {
 
 const LogsTableRow = ({ log }: LogsTableRowProps) => {
   return (
-    <tr className="hover:bg-white/30 border-t border-black/80 transition-colors duration-150">
-      <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.endpoint}</td>
-      <td className="pr-6 whitespace-nowrap align-top px-2 py-1">{log.status}</td>
-      <td className="pr-6 whitespace-nowrap align-top px-2 py-1">
+    <tr className="border-b border-white/10 hover:bg-white/10 transition-colors duration-200">
+      <td className="pr-6 whitespace-nowrap align-top px-2 py-2">{log.endpoint}</td>
+      <td className="pr-6 whitespace-nowrap align-top px-2 py-2">{log.status}</td>
+      <td className="pr-6 whitespace-nowrap align-top px-2 py-2">
         {new Date(log.executedAt).toLocaleString('ru-RU')}
       </td>
-      <td className="align-top px-2 py-1">{log.details}</td>
+      <td className="align-top px-2 py-2">{log.details}</td>
     </tr>
   );
 };
@@ -56,7 +56,7 @@ const LogsTable = ({ logs }: LogsTableProps) => {
   ];
 
   return (
-    <div className="text-xs h-50 overflow-y-auto bg-slate-200/50">
+    <div className="text-slate-200 text-xs h-50 overflow-y-auto">
       <table className="text-left w-full relative">
         <LogsTableHeader columns={columns} />
         <tbody>
@@ -71,7 +71,7 @@ const LogsTable = ({ logs }: LogsTableProps) => {
 
 const LoadingState = () => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 text-slate-200">
       <FontAwesomeIcon icon={faSpinner} size="1x" spin />
       <span>Загрузка логов...</span>
     </div>

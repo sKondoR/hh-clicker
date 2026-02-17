@@ -1,25 +1,17 @@
 @import "tailwindcss";
 
-:root {
-  --background: #e73c7e;
-  --gradient-primary: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  --gradient-size: 400% 400%;
-}
-
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background: var(--gradient-primary);
-  background-size: var(--gradient-size);
 }
 
 /* Make scrollbar pretty */
 ::-webkit-scrollbar {
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 0.6rem;
+  height: 0.6rem;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #f1f1f1;
+  background-color: #f1f1f150;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -28,7 +20,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #6c757d;
+  background-color: #adb5bd;
 }
 
 i.fas, i.far, i.fal, .svg-inline--fa {

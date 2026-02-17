@@ -70,20 +70,23 @@ const HomeForm: React.FC = () => {
   const isStopButtonDisabled = !isScraping;
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold text-teal-700">
+    <div className="max-w-lg mx-auto backdrop-blur-2xl bg-white/10 border border-white/20 rounded-lg shadow-2xl p-6">
+      <h1 className="text-center text-4xl font-bold bg-linear-to-r from-red-500 via-red-500 to-pink-300 bg-clip-text text-transparent mb-2">
         HH Clicker
       </h1>
-      <h2 className="text-xl text-gray-500 mb-8 leading-none">
+      <h2 className="text-center text-slate-300 text-sm mb-8 leading-none">
         Автоматическое повышение активности на <span className="font-bold text-red-500">HeadHunter</span>
       </h2>
     
       <div> 
         <div className="mb-6">
+          <div className="text-slate-200 text-sm font-medium mb-2">Поиск вакансий по ключевому слову</div>
           <input 
             type="text" 
             placeholder="Введите поисковый запрос" 
-            className="w-full px-3 py-2 text-gray-700 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full px-3 py-2 bg-linear-to-b from-slate-900 via-indigo-950 to-slate-900 backdrop-blur-sm border border-white/40 rounded-lg 
+                       text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/70 
+                       focus:border-cyan-400/50 transition-all duration-300"
             onChange={(e) => setQuery(e.target.value)}
             value={query}
             disabled={isScraping}
@@ -91,34 +94,40 @@ const HomeForm: React.FC = () => {
         </div>
 
         <div className="mb-6">
-          <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-gray-700">Статус активности</span>
-            <span className="text-sm font-medium text-gray-700">
+          <div className="flex justify-between">
+            <div className="text-slate-200 text-sm font-medium mb-2">Статус активности</div>
+            <div className={`font-bold text-lg 
+                ${progress && progress > 80 ? ' text-green-400' : ' text-red-400'}
+              `}>
               {progress === null && '?'}
               {progress === undefined && <FontAwesomeIcon icon={faSpinner} spin />}
               {progress !== null && progress !== undefined && `${progress}%`}
-            </span>
+            </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div 
               className={`
-                ${progress === null || progress === undefined ? 'bg-gray-400 ' : ''}
-                ${progress && (progress > HIGH_ACTIVITY_THRESHOLD ? 'bg-green-600 ' : 'bg-red-600 ')}
-                h-2.5 rounded-full transition-all duration-300`}
+                ${progress === null || progress === undefined ? 'from-gray-300 via-gray-600 to-gray-300 ' : ''}
+                ${progress && (progress > HIGH_ACTIVITY_THRESHOLD ? 'from-green-300 via-green-600 to-green-300 ' : 'from-red-300 via-red-600 to-red-300 ')}
+                h-2.5 bg-linear-to-r  rounded-lg transition-all duration-500 shadow-lg shadow-cyan-500/50`}
               style={{ width: `${progress !== null ? progress : 0}%` }}
             ></div>
           </div>
         </div>
         <div className="mb-6">
-          <p className="text-sm text-gray-600">Статус: {status}</p>
+          <p className="text-slate-200 text-sm font-medium">Статус: {status}</p>
         </div>
         
         <div className="flex space-x-4">
           <button
             onClick={startScraping}
             disabled={isStartButtonDisabled}
-            className={`flex-1 py-2 px-4 border bg-green-500 border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50
-              ${isStartButtonDisabled ? '' : ' cursor-pointer hover:bg-green-700'}
+            className={`flex-1 px-3 py-3
+              bg-linear-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 
+              disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed disabled:opacity-50
+              text-white font-semibold rounded-lg transition-all duration-300 
+              shadow-xl shadow-emerald-400/30 hover:not(:disabled):shadow-emerald-400/50 hover:not(:disabled):scale-[1.02]
+              active:not(:disabled):scale-[0.98]
             `}
           >
             {isScraping ? <><FontAwesomeIcon icon={faSpinner} spin /> Выполняется...</> : 'Повысить активность'}
@@ -127,15 +136,19 @@ const HomeForm: React.FC = () => {
           <button
             onClick={stopScraping}
             disabled={isStopButtonDisabled}
-            className={`flex-1 py-2 px-4 border bg-red-500 border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50
-              ${isStopButtonDisabled ? '' : ' cursor-pointer hover:bg-red-700'}
+            className={`flex-1 px-3 py-3
+              bg-linear-to-r from-pink-400 to-red-400 hover:from-pink-500 hover:to-red-500 
+              disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed disabled:opacity-50
+              text-white font-semibold rounded-lg transition-all duration-300 
+              shadow-xl shadow-pink-400/30 hover:not(:disabled):shadow-pink-400/50 hover:not(:disabled):scale-[1.02]
+              active:not(:disabled):scale-[0.98]'}
             `}
           >
             Остановить
           </button>
         </div>
         
-        <div className="mt-6 text-sm text-gray-500">
+        <div className="mt-6 text-slate-200 text-sm font-medium ">
           <p>Приложение будет автоматически открывать вакансии по запросу (например &quot;java&quot;) до достижения 100% активности.</p>
         </div>
       </div>

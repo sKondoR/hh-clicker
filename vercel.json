@@ -18,12 +18,9 @@
       "memory": 2048
     },
     "src/app/api/cron/route.ts": {
-      "maxDuration": 600,
-      "memory": 1024
+      "maxDuration": 300,
+      "memory": 2048
     }
-  },
-  "env": {
-    "PUPPETEER_EXECUTABLE_PATH": "@sparticuz/chromium"
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",

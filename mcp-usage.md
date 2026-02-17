@@ -405,3 +405,14 @@ Workflow:
    - Сохрани: "Performance issue [описание] решена через [метод]"
 
 Начни с планирования через Sequential Thinking.
+
+
+
+# try MCP 
+hyperbrowser": {
+   "command": "npx",
+   "args": ["-y", "hyperbrowser-mcp"],
+   "env": {
+      "HYPERBROWSER_API_KEY": "ТВОЙ-КЛЮЧ-API"
+   }
+}

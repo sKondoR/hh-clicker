@@ -11,36 +11,16 @@ const FULL_PROGRESS = 100;
 
 // Синглтон для управления браузером на Vercel
 export class BrowserManager {
-  private static instance: BrowserManager;
   private browser: Browser | null = null;
   private page: Page | null = null;
-  private isInitializing = false;
-  private initializationPromise: Promise<void> | null = null;
-
-  private constructor() {}
-
-  static getInstance(): BrowserManager {
-    if (!BrowserManager.instance) {
-      BrowserManager.instance = new BrowserManager();
-    }
-    return BrowserManager.instance;
-  }
+  private readonly INIT_TIMEOUT = 60000; // 60 seconds timeout for initialization
 
   async init(): Promise<void> {
     if (this.browser && this.page) {
       return;
     }
 
-    if (this.isInitializing) {
-      await this.initializationPromise;
-      return;
-    }
-
-    this.isInitializing = true;
-    this.initializationPromise = this.createBrowser();
-    await this.initializationPromise;
-    this.isInitializing = false;
-    this.initializationPromise = null;
+    await this.createBrowser();
   }
 
   private async createBrowser(): Promise<void> {
@@ -53,20 +33,20 @@ export class BrowserManager {
         executablePath,
         headless: process.env.NODE_ENV === 'production',
         args: [
+          '--single-process',
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
           '--disable-web-security',
           '--disable-features=IsolateOrigins,site-per-process',
-          '--single-process',
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
           '--disable-renderer-backgrounding',
           '--window-size=1920,1080',
           '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         ],
-        timeout: 30000
+        timeout: this.INIT_TIMEOUT
       });
 
       this.page = await this.browser.newPage();
@@ -90,32 +70,19 @@ export class BrowserManager {
       console.log('Браузер успешно инициализирован');
     } catch (error) {
       console.error('Ошибка при запуске браузера:', error);
-      await this.recreateBrowser();
+      await this.close();
       throw error;
     }
-  }
-
-  async recreateBrowser(): Promise<void> {
-    console.log('Перезапуск браузера...');
-    
-    if (this.browser) {
-      try {
-        await this.browser.close();
-      } catch (error) {
-        console.error('Ошибка при закрытии браузера:', error);
-      }
-    }
-
-    this.browser = null;
-    this.page = null;
-    await this.createBrowser();
   }
 
   async getPage(): Promise<Page> {
     if (!this.page) {
       await this.init();
     }
-    return this.page!;
+    if (!this.page) {
+      throw new Error('Браузер не инициализирован');
+    }
+    return this.page;
   }
 
   async close(): Promise<void> {
@@ -135,10 +102,11 @@ export class BrowserManager {
 export class IncreaseHhActivity {
   private config: ScrapingConfig;
   private visitedVacancies: Set<string> = new Set();
-  private browserManager = BrowserManager.getInstance();
+  private browserManager: BrowserManager;
 
   constructor(config: ScrapingConfig = { delayBetweenViews: 3000, maxRetries: 3 }) {
     this.config = config;
+    this.browserManager = new BrowserManager();
   }
 
   async init(): Promise<void> {
@@ -146,49 +114,49 @@ export class IncreaseHhActivity {
   }
 
   async login(): Promise<boolean> {
-    const credentials: HHCredentials = {
-      username: process.env.HH_USERNAME || '',
-      password: process.env.HH_PASSWORD || ''
-    };
-    if (!credentials.username || !credentials.password) {
-      throw new Error('Credentials not found in environment variables');
-    }
+      const credentials: HHCredentials = {
+        username: process.env.HH_USERNAME || '',
+        password: process.env.HH_PASSWORD || ''
+      };
+      if (!credentials.username || !credentials.password) {
+        throw new Error('Credentials not found in environment variables');
+      }
 
-    const page = await this.browserManager.getPage();
-    await page.goto('https://spb.hh.ru/account/login');
+      const page = await this.browserManager.getPage();
+      await page.goto('https://spb.hh.ru/account/login');
 
-    // Клик по "Войти"
-    await page.click('button:has-text("Войти")');
+      // Клик по "Войти"
+      await page.click('button:has-text("Войти")');
 
-    // Клик по "Почта"
-    await page.click('div[class^="magritte-label"]:has-text("Почта")');
+      // Клик по "Почта"
+      await page.click('div[class^="magritte-label"]:has-text("Почта")');
 
-    await page.click('button:has-text("Войти с паролем")');
+      await page.click('button:has-text("Войти с паролем")');
 
-    // Ожидание загрузки формы
-    await page.waitForSelector('input[name="username"]');
-    await page.fill('input[name="username"]', credentials.username);
+      // Ожидание загрузки формы
+      await page.waitForSelector('input[name="username"]');
+      await page.fill('input[name="username"]', credentials.username);
 
-    // Клик по разделу "Войти с паролем"
-    await page.click('button:has-text("Войти с паролем")');
-    
-    // Ввод пароля
-    await page.fill('input[name="password"]', credentials.password);
-    
-    // Нажатие кнопки входа
-    await page.click('button:has-text("Войти")');
-    await page.waitForURL('https://spb.hh.ru/');
+      // Клик по разделу "Войти с паролем"
+      await page.click('button:has-text("Войти с паролем")');
+      
+      // Ввод пароля
+      await page.fill('input[name="password"]', credentials.password);
+      
+      // Нажатие кнопки входа
+      await page.click('button:has-text("Войти")');
+      await page.waitForURL('https://spb.hh.ru/');
 
-    // Проверка успешной авторизации
-    const isLoggedIn = await this.checkLoginStatus();
-    
-    if (isLoggedIn) {
-      console.log('Успешный вход в систему');
-      return true;
-    } else {
-      console.error('Ошибка авторизации');
-      return false;
-    }
+      // Проверка успешной авторизации
+      const isLoggedIn = await this.checkLoginStatus();
+      
+      if (isLoggedIn) {
+        console.log('Успешный вход в систему');
+        return true;
+      } else {
+        console.error('Ошибка авторизации');
+        return false;
+      }
   }
 
   async checkLoginStatus(): Promise<boolean> {
@@ -209,55 +177,57 @@ export class IncreaseHhActivity {
     const lastPageText = await lastPageElement.textContent();
     return parseInt(lastPageText || '1');
   }  
-
+  
   async searchVacancies(params: SearchParams, neededNewVacancies: number): Promise<string[]> {
     const page = await this.browserManager.getPage();
+    try {
+      // Загружаем список уже посещенных вакансий
+      this.visitedVacancies = await loadVisitedVacancies();
 
-    // Загружаем список уже посещенных вакансий
-    this.visitedVacancies = await loadVisitedVacancies();
-
-    const searchUrl = `https://spb.hh.ru/search/vacancy?salary=&ored_clusters=true&hhtmFrom=vacancy_search_list&hhtmFromLabel=vacancy_search_line`;
-    
-    // Переход на главную страницу
-    await page.goto(`${searchUrl}&text=${params.query}`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-qa="vacancy-serp__results"]');
-  
-    // Проверка, есть ли еще страницы с результатами
-    const pageCount = await this.getPagesCount();
-    
-    const newVacancies = [];
-    let currentPage = pageCount - 1;
-    
-    while (newVacancies.length < neededNewVacancies && currentPage >= 0) {
-      await page.goto(`${searchUrl}&text=${params.query}&page=${currentPage}`);
+      const searchUrl = `https://spb.hh.ru/search/vacancy?salary=&ored_clusters=true&hhtmFrom=vacancy_search_list&hhtmFromLabel=vacancy_search_line`;
+      
+      // Переход на главную страницу
+      await page.goto(`${searchUrl}&text=${params.query}`, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('[data-qa="vacancy-serp__results"]');
+    
+      // Проверка, есть ли еще страницы с результатами
+      const pageCount = await this.getPagesCount();
       
-      const vacancyLinks = await page.evaluate(() => {
-        const links = Array.from(document.querySelectorAll<HTMLLinkElement>('a[data-qa="serp-item__title"]'));
-        return links.map(link => link.href);
-      });
+      const newVacancies = [];
+      let currentPage = pageCount - 1;
       
-      // Фильтруем вакансии, которые уже посещали
-      for (const link of vacancyLinks) {
-        if (newVacancies.length >= neededNewVacancies) {
-          break;
+      while (newVacancies.length < neededNewVacancies && currentPage >= 0) {
+        await page.goto(`${searchUrl}&text=${params.query}&page=${currentPage}`);
+        await page.waitForSelector('[data-qa="vacancy-serp__results"]');
+        
+        const vacancyLinks = await page.evaluate(() => {
+          const links = Array.from(document.querySelectorAll<HTMLLinkElement>('a[data-qa="serp-item__title"]'));
+          return links.map(link => link.href);
+        });
+        
+        // Фильтруем вакансии, которые уже посещали
+        for (const link of vacancyLinks) {
+          if (newVacancies.length >= neededNewVacancies) {
+            break;
+          }
+          const vacancyId = getIdFromUrl(link);
+          if (vacancyId && !this.visitedVacancies.has(vacancyId)) {
+            newVacancies.push(link);
+          }
         }
-        const vacancyId = getIdFromUrl(link);
-        if (vacancyId && !this.visitedVacancies.has(vacancyId)) {
-          newVacancies.push(link);
-        }
+        
+        // Переходим на предыдущую страницу
+        currentPage--;
       }
-      
-      // Переходим на предыдущую страницу
-      currentPage--;
-    }
 
-    return newVacancies;
+      return newVacancies;
+    } finally {
+      await this.browserManager.close();
+    }
   }
 
   async openVacancy(vacancyUrl: string): Promise<void> {
     const page = await this.browserManager.getPage();
-
     try {
       // Просто переходим по ссылке (в текущей вкладке)
       await Promise.all([
@@ -274,13 +244,13 @@ export class IncreaseHhActivity {
       }
     } catch (error) {
       console.error(`Ошибка при открытии вакансии ${vacancyUrl}:`, error);
+    } finally {
+      await this.browserManager.close();
     }
   }
 
   async getActivityStatus(): Promise<ActivityStatus> {
     const page = await this.browserManager.getPage();
-
-    // Поиск элемента, содержащего информацию об активности
     try {
       let broadcastProgress: ((progress: number, status: string) => void) | undefined;
       try {
@@ -338,6 +308,8 @@ export class IncreaseHhActivity {
         statusText: 'Не удалось определить',
         lastUpdated: new Date()
       };
+    } finally {
+      await this.browserManager.close();
     }
   }
 
@@ -349,71 +321,79 @@ export class IncreaseHhActivity {
       console.warn('SSE progress broadcasting is not available:', error);
     }
 
-    let activityStatus = await this.getActivityStatus();
-    console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
+    try {
+      let activityStatus = await this.getActivityStatus();
+      console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
 
-    const neededNewVacancies = Math.ceil((FULL_PROGRESS - activityStatus.percentage) / 2);
+      const neededNewVacancies = Math.ceil((FULL_PROGRESS - activityStatus.percentage) / 2);
 
-     if (neededNewVacancies > 0) {
-      console.log(`Нужно открыть ${neededNewVacancies} новых вакансий`);
-     } else {
-      console.log(`Увеличение активности не требуется`);
-      return activityStatus.percentage;
-     }
-      
-    while (activityStatus.percentage < FULL_PROGRESS) {
-      const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
-      console.log(`Найдено ${vacancyLinks.length} новых вакансий`);
-      
-      for (const url of vacancyLinks) {
-        if (activityStatus.percentage >= FULL_PROGRESS) {
-          break;
-        }
+       if (neededNewVacancies > 0) {
+        console.log(`Нужно открыть ${neededNewVacancies} новых вакансий`);
+       } else {
+        console.log(`Увеличение активности не требуется`);
+        return activityStatus.percentage;
+       }
         
-        console.log(`Открываю вакансию: ${getIdFromUrl(url)}`);
-        await this.openVacancy(url);
+      while (activityStatus.percentage < FULL_PROGRESS) {
+        const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
+        console.log(`Найдено ${vacancyLinks.length} новых вакансий`);
         
-        // Задержка между открытием вакансий
-        await (await this.browserManager.getPage()).waitForTimeout(this.config.delayBetweenViews);
-        
-        // Проверяем статус активности
-        activityStatus = await this.getActivityStatus();
-        console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
-        
-        // Отправляем обновление прогресса клиенту через SSE
-        if (broadcastProgress) {
-          broadcastProgress(activityStatus.percentage, `Текущий уровень активности: ${activityStatus.percentage}%`);
-        }
-        
-        if (activityStatus.percentage >= FULL_PROGRESS) {
-          console.log('Достигнут максимальный уровень активности 100%');
-        
-        // Отправляем финальное обновление прогресса клиенту через SSE
-        if (broadcastProgress) {
-          broadcastProgress(100, 'Достигнут максимальный уровень активности 100%');
-        }
-          break;
+        for (const url of vacancyLinks) {
+          if (activityStatus.percentage >= FULL_PROGRESS) {
+            break;
+          }
+          
+          console.log(`Открываю вакансию: ${getIdFromUrl(url)}`);
+          await this.openVacancy(url);
+          
+          // Задержка между открытием вакансий
+          await (await this.browserManager.getPage()).waitForTimeout(this.config.delayBetweenViews);
+          
+          // Проверяем статус активности
+          activityStatus = await this.getActivityStatus();
+          console.log(`Текущий уровень активности: ${activityStatus.percentage}%`);
+          
+          // Отправляем обновление прогресса клиенту через SSE
+          if (broadcastProgress) {
+            broadcastProgress(activityStatus.percentage, `Текущий уровень активности: ${activityStatus.percentage}%`);
+          }
+          
+          if (activityStatus.percentage >= FULL_PROGRESS) {
+            console.log('Достигнут максимальный уровень активности 100%');
+          
+          // Отправляем финальное обновление прогресса клиенту через SSE
+          if (broadcastProgress) {
+            broadcastProgress(100, 'Достигнут максимальный уровень активности 100%');
+          }
+            break;
+          }
         }
       }
-    }
 
-    const endActivityStatus = await this.getActivityStatus();
-    return endActivityStatus.percentage;
+      const endActivityStatus = await this.getActivityStatus();
+      return endActivityStatus.percentage;
+    } finally {
+      await this.browserManager.close();
+    }
   }
 
   async raiseCV(): Promise<void> {
     const page = await this.browserManager.getPage();
-    const cvUrl = `https://spb.hh.ru/applicant/resumes`;
-    
-    // Переход на главную страницу
-    await page.goto(cvUrl, { waitUntil: 'domcontentloaded' });
+    try {
+      const cvUrl = `https://spb.hh.ru/applicant/resumes`;
+      
+      // Переход на главную страницу
+      await page.goto(cvUrl, { waitUntil: 'domcontentloaded' });
 
-    const button = await page.$('button:has-text("Поднять в поиске")');
-    if (button) {
-      await page.click('button:has-text("Поднять в поиске")');
-      console.log('Кликнул на Поднять в поиске');
-    } else {
-      console.log('Кнопка "Поднять в поиске" не найдена');
+      const button = await page.$('button:has-text("Поднять в поиске")');
+      if (button) {
+        await page.click('button:has-text("Поднять в поиске")');
+        console.log('Кликнул на Поднять в поиске');
+      } else {
+        console.log('Кнопка "Поднять в поиске" не найдена');
+      }
+    } finally {
+      await this.browserManager.close();
     }
   }
 

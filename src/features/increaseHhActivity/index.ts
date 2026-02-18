@@ -51,7 +51,8 @@ export class BrowserManager {
     try {
       this.browser = await plChromium.launch({ 
         executablePath,
-        headless: process.env.NODE_ENV === 'production',
+        headless: true,
+        // headless: process.env.NODE_ENV === 'production',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -119,6 +120,7 @@ export class BrowserManager {
   }
 
   async close(): Promise<void> {
+    console.log('close');
     if (this.browser) {
       try {
         await this.browser.close();
@@ -536,7 +538,7 @@ export class IncreaseHhActivity {
     return endActivityStatus.percentage;
   }
 
-  async raiseCV(): Promise<void> {
+  async raiseCV(): Promise<boolean> {
     const page = await this.browserManager.getPage();
     const cvUrl = `https://spb.hh.ru/applicant/resumes`;
     
@@ -547,9 +549,11 @@ export class IncreaseHhActivity {
     if (button) {
       await page.click('button:has-text("Поднять в поиске")');
       console.log('Кликнул на Поднять в поиске');
+      return true;
     } else {
       console.log('Кнопка "Поднять в поиске" не найдена');
     }
+    return false;
   }
 
   async close(): Promise<void> {

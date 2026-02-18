@@ -469,7 +469,7 @@ export class IncreaseHhActivity {
       return activityStatus.percentage;
     }
 
-    const currentPercentage = activityStatus.percentage;
+    let currentPercentage = activityStatus.percentage;
     const neededNewVacancies = Math.ceil((FULL_PROGRESS - currentPercentage) / 2);
 
      if (neededNewVacancies > 0) {
@@ -482,6 +482,12 @@ export class IncreaseHhActivity {
     while (currentPercentage < FULL_PROGRESS) {
       const vacancyLinks = await this.searchVacancies(searchParams, neededNewVacancies);
       console.log(`Найдено ${vacancyLinks.length} новых вакансий`);
+      
+      // Если не нашлось вакансий, прерываем цикл
+      if (vacancyLinks.length === 0) {
+        console.log('Вакансии не найдены, прекращаем цикл');
+        break;
+      }
       
       for (const url of vacancyLinks) {
         if (currentPercentage >= FULL_PROGRESS) {
@@ -520,6 +526,9 @@ export class IncreaseHhActivity {
           }
           break;
         }
+        
+        // Обновляем currentPercentage для правильной работы цикла
+        currentPercentage = updatedPercentage;
       }
     }
 

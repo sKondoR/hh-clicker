@@ -45,14 +45,14 @@ export async function GET(request: NextRequest) {
     if (!query) {
       const activityStatus = await scraper.getActivityStatus();
       activityPercentage = activityStatus.percentage;
-      logApiExecution(pathname, `request activity - ${activityPercentage}%`);
+      logApiExecution(pathname, `request activity, ${activityPercentage}%`);
     } else {
       const scrapParams: SearchParams = {
           query,
       };
       activityPercentage = await scraper.startScrapingCycle(scrapParams);
       await scraper.raiseCV();
-      logApiExecution(pathname, `raise activity - ${activityPercentage}%`);
+      logApiExecution(pathname, `raise CV`);
     }
     
     const data = { success: true, activityPercentage: activityPercentage };

@@ -26,7 +26,6 @@ export const connections = new Set<SSEConnection>();
 // Функция для отправки обновлений всем подключенным клиентам
 export function broadcastProgress(progress: number | null, status: string) {
   connections.forEach(connection => {
-    console.log('connection.send', progress, status);
     connection.send({ progress, status, timestamp: new Date().toISOString() });
   });
 }

@@ -100,7 +100,7 @@
             "-y",
             "@modelcontextprotocol/server-puppeteer"
          ],
-         "disabled": false,
+         "disabled": true,
          "alwaysAllow":[
             "puppeteer_navigate",
             "puppeteer_screenshot",

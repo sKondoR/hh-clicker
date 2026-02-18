@@ -122,7 +122,7 @@ const HomeForm: React.FC = () => {
           <button
             onClick={startScraping}
             disabled={isStartButtonDisabled}
-            className={`flex-1 px-3 py-3
+            className={`flex-1 px-3 py-3 cursor-pointer 
               bg-linear-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 
               disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed disabled:opacity-50
               text-white font-semibold rounded-lg transition-all duration-300 
@@ -136,7 +136,7 @@ const HomeForm: React.FC = () => {
           <button
             onClick={stopScraping}
             disabled={isStopButtonDisabled}
-            className={`flex-1 px-3 py-3
+            className={`flex-1 px-3 py-3 cursor-pointer
               bg-linear-to-r from-pink-400 to-red-400 hover:from-pink-500 hover:to-red-500 
               disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed disabled:opacity-50
               text-white font-semibold rounded-lg transition-all duration-300 
